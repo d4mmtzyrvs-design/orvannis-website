@@ -323,6 +323,17 @@
     renderAbout();
     renderContact();
     applyLayoutToggles();
+
+    // The render*() calls above inject content (e.g. feature lists) into
+    // sections that sit above an anchor target like #pay — that growth
+    // happens after the browser's automatic scroll-to-fragment already ran
+    // against the pre-render layout, so a direct link to e.g.
+    // platform.html#pay lands back at the top of the page instead of the
+    // intended section. Re-run the jump now that layout has settled.
+    if (window.location.hash) {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (target) target.scrollIntoView({ block: 'start' });
+    }
   });
 
 })();
