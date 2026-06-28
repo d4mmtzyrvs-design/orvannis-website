@@ -78,10 +78,17 @@
 .banner-img {
   display: none;
   width: 100%;
-  height: auto;
   max-width: none;
   object-fit: cover;
+  object-position: center;
 }
+/* Each variant's height is set independently (rather than width:100%/height:auto)
+   because the two source images have different aspect ratios — this keeps both
+   scaled to ~60% of their original full-bleed height instead of one looking
+   disproportionately smaller than the other. */
+.banner-img--for-light { height: clamp(90px, 24vw, 280px); }  /* cream banner, ~2.5:1 source */
+.banner-img--for-dark  { height: clamp(70px, 14.7vw, 180px); } /* dark banner, ~4.1:1 source */
+
 [data-theme="dark"]  .banner-img--for-light { display: none; }
 [data-theme="dark"]  .banner-img--for-dark  { display: block; }
 html:not([data-theme="dark"]) .banner-img--for-light { display: block; }
