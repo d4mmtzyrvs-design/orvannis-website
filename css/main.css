@@ -63,9 +63,9 @@
 /* =====================
    SITE-TOP BANNER
    Full lockup (mark + wordmark + tagline) shown as a compact strip above
-   the nav. Per brand direction: the DARK-background banner image is shown
-   in light theme, and the LIGHT-background banner image in dark theme
-   (intentionally inverted for contrast against the page background).
+   the nav. The banner image's own background now matches the active theme
+   (cream image in light mode, black image in dark mode), so the container
+   background just follows --color-bg to stay seamless behind it.
    ===================== */
 .site-top-banner {
   width: 100%;
@@ -73,7 +73,7 @@
   align-items: center;
   justify-content: center;
   padding-block: 0.75rem;
-  background: #0E0C0A;
+  background: var(--color-bg);
   position: relative;
   z-index: 10;
 }
@@ -88,8 +88,6 @@
 [data-theme="dark"]  .banner-img--for-dark  { display: block; }
 html:not([data-theme="dark"]) .banner-img--for-light { display: block; }
 html:not([data-theme="dark"]) .banner-img--for-dark  { display: none; }
-
-[data-theme="dark"] .site-top-banner { background: #FAF8F4; }
 
 @media (max-width: 600px) {
   .site-top-banner { padding-block: 0.5rem; }
