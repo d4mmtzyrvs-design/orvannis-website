@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orvannis Orbital Logo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%; height: 100%;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+const COPPER        = '#B87333';
+const COPPER_BRIGHT = '#CD8B52';
+const COPPER_DARK   = '#9C5A2C';
+
+let W, H, cx, cy;
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.offsetWidth;
+  const cssH = canvas.offsetHeight;
+  canvas.width  = cssW * dpr;
+  canvas.height = cssH * dpr;
+  ctx.scale(dpr, dpr);
+  W  = cssW;
+  H  = cssH;
+  cx = W / 2;
+  cy = H / 2;
+}
+resize();
+window.addEventListener('resize', resize);
+
+/* ── Ring definitions ────────────────────────────────────────────
+   tiltX / tiltY: fixed tilt of the ring's orbital plane (radians)
+   angle:         current spin angle around the ring's own axis
+   speed:         spin speed (radians per ms)
+*/
+const rings = [
+  {
+    label:     'Expertise',
+    radius:    0.39,
+    tiltX:     0.68,   // pitch (nose-up)
+    tiltY:    -0.30,   // yaw
+    speed:     0.00052,
+    angle:     Math.PI * 0.08,
+    color:     COPPER_DARK,
+    glowColor: COPPER,
+    fontSize:  0.030,
+    fontFloor: 15,
+  },
+  {
+    label:     'Human-Led Automation',
+    radius:    0.295,
+    tiltX:     0.50,
+    tiltY:     1.10,
+    speed:    -0.00090,
+    angle:     Math.PI * 0.12,
+    color:     COPPER,
+    glowColor: COPPER_BRIGHT,
+    fontSize:  0.028,
+    fontFloor: 14,
+  },
+];
+
+/* ── 3 × 3 matrix multiply ──────────────────────────────────── */
+function matMul(A, B) {
+  // A and B are flat [9]-element row-major 3×3 matrices
+  const C = new Float64Array(9);
+  for (let r = 0; r < 3; r++)
+    for (let c = 0; c < 3; c++)
+      for (let k = 0; k < 3; k++)
+        C[r*3+c] += A[r*3+k] * B[k*3+c];
+  return C;
+}
+
+/* ── Build the combined rotation matrix for a ring ──────────────
+   Order: spin around local Z first, then tiltX (rotateX), then tiltY (rotateY).
+   This keeps the ring plane fixed in space while the label text orbits.
+*/
+function ringMatrix(ring) {
+  const a = ring.angle;
+  const tx = ring.tiltX;
+  const ty = ring.tiltY;
+
+  // Rz — spin (the ring rotates around its own axis)
+  const Rz = new Float64Array([
+     Math.cos(a), -Math.sin(a), 0,
+     Math.sin(a),  Math.cos(a), 0,
+     0,            0,           1,
+  ]);
+
+  // Rx — tilt around X axis (pitch)
+  const Rx = new Float64Array([
+    1,  0,           0,
+    0,  Math.cos(tx), -Math.sin(tx),
+    0,  Math.sin(tx),  Math.cos(tx),
+  ]);
+
+  // Ry — tilt around Y axis (yaw)
+  const Ry = new Float64Array([
+     Math.cos(ty), 0, Math.sin(ty),
+     0,            1, 0,
+    -Math.sin(ty), 0, Math.cos(ty),
+  ]);
+
+  // Combined: M = Ry · Rx · Rz
+  return matMul(Ry, matMul(Rx, Rz));
+}
+
+/* ── Project a 3D point to 2D screen space with perspective ─── */
+function project(x3, y3, z3) {
+  const fov   = Math.min(W, H) * 2.2;
+  const zOff  = Math.min(W, H) * 0.35;
+  const scale = fov / (fov + z3 + zOff);
+  return { x: cx + x3 * scale, y: cy + y3 * scale, z: z3, scale };
+}
+
+/* ── Draw a full 3D rotating ring ───────────────────────────────
+   Characters are placed every ~charW px along the projected arc.
+   Text tangent follows the projected curve so it flows naturally.
+   Constant globalAlpha — no depth fading, all chars always visible.
+*/
+function drawRing(ring) {
+  const rad   = ring.radius * Math.min(W, H);
+  const M     = ringMatrix(ring);
+  const steps = 360;
+  const fs    = Math.max(ring.fontFloor, Math.min(W, H) * ring.fontSize);
+
+  // Pre-project all points
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const theta = (i / steps) * Math.PI * 2;
+    // Local ring coords: circle in XY plane
+    const lx = rad * Math.cos(theta);
+    const ly = rad * Math.sin(theta);
+    const lz = 0;
+    // Apply rotation matrix
+    const wx = M[0]*lx + M[1]*ly + M[2]*lz;
+    const wy = M[3]*lx + M[4]*ly + M[5]*lz;
+    const wz = M[6]*lx + M[7]*ly + M[8]*lz;
+    pts.push(project(wx, wy, wz));
+  }
+
+  // Measure total projected arc length
+  let arcLen = 0;
+  let scaleMin = Infinity, scaleMax = -Infinity;
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i].x - pts[i-1].x;
+    const dy = pts[i].y - pts[i-1].y;
+    arcLen += Math.sqrt(dx*dx + dy*dy);
+    if (pts[i].scale < scaleMin) scaleMin = pts[i].scale;
+    if (pts[i].scale > scaleMax) scaleMax = pts[i].scale;
+  }
+  const scaleRange = Math.max(scaleMax - scaleMin, 0.0001);
+
+  const charW = fs * 0.60;
+  const nCh   = Math.floor(arcLen / charW);
+
+  const arrow = ring.speed >= 0 ? '›' : '‹';
+  const str = (ring.label + `  ${arrow}  `).repeat(30);
+
+  ctx.font = `400 ${fs}px 'Palatino Linotype', Palatino, Georgia, serif`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (let ci = 0; ci < nCh; ci++) {
+    const idx   = Math.round((ci / nCh) * steps) % steps;
+    const p     = pts[idx];
+    const pNext = pts[(idx + 2) % steps];
+
+    // Tangent angle in screen space
+    const ang = Math.atan2(pNext.y - p.y, pNext.x - p.x);
+    const ch  = str[ci % str.length];
+
+    // Depth cue: the far side of the ring (smaller projected scale) recedes —
+    // fades and shrinks slightly so it reads as "behind" instead of crossing
+    // the near side of the text at full strength.
+    const depthT = (p.scale - scaleMin) / scaleRange; // 0 = far, 1 = near
+    const depthAlpha = 0.30 + depthT * 0.65;
+    const depthScale = 0.78 + depthT * 0.22;
+
+    ctx.save();
+    ctx.globalAlpha = depthAlpha;
+    ctx.fillStyle   = ring.color;
+    ctx.shadowColor = ring.glowColor;
+    ctx.shadowBlur  = 9;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(ang);
+    ctx.scale(depthScale, depthScale);
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+  }
+}
+
+/* ── Planet ──────────────────────────────────────────────────── */
+function drawPlanet() {
+  const PR = Math.min(W, H) * 0.145;
+
+  // Drop shadow
+  ctx.save();
+  const shadowG = ctx.createRadialGradient(
+    cx + PR * 0.2, cy + PR * 0.2, PR * 0.3,
+    cx + PR * 0.2, cy + PR * 0.2, PR * 1.5
+  );
+  shadowG.addColorStop(0, 'rgba(0,0,0,0)');
+  shadowG.addColorStop(1, 'rgba(0,0,0,0.40)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR * 1.5, 0, Math.PI * 2);
+  ctx.fillStyle = shadowG;
+  ctx.fill();
+  ctx.restore();
+
+  // Stone sphere
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR, 0, Math.PI * 2);
+  const stoneG = ctx.createRadialGradient(
+    cx - PR * 0.32, cy - PR * 0.32, PR * 0.04, cx, cy, PR
+  );
+  stoneG.addColorStop(0.00, '#5C564E');
+  stoneG.addColorStop(0.28, '#4A4540');
+  stoneG.addColorStop(0.58, '#33302B');
+  stoneG.addColorStop(0.85, '#28251F');
+  stoneG.addColorStop(1.00, '#1A1713');
+  ctx.fillStyle = stoneG;
+  ctx.shadowColor = 'rgba(0,0,0,0.9)';
+  ctx.shadowBlur = 28;
+  ctx.fill();
+  ctx.restore();
+
+  // Surface bands
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR, 0, Math.PI * 2);
+  ctx.clip();
+  const bands = [
+    { y: cy - PR * 0.58, h: PR * 0.14, a: 0.10, c: COPPER_BRIGHT },
+    { y: cy - PR * 0.30, h: PR * 0.11, a: 0.13, c: COPPER },
+    { y: cy - PR * 0.06, h: PR * 0.22, a: 0.18, c: COPPER },
+    { y: cy + PR * 0.20, h: PR * 0.13, a: 0.12, c: COPPER_DARK },
+    { y: cy + PR * 0.46, h: PR * 0.10, a: 0.08, c: COPPER_DARK },
+  ];
+  for (const b of bands) {
+    const hex = Math.round(b.a * 255).toString(16).padStart(2, '0');
+    const bg = ctx.createLinearGradient(cx - PR, b.y, cx + PR, b.y + b.h);
+    bg.addColorStop(0, b.c + '00');
+    bg.addColorStop(0.3, b.c + hex);
+    bg.addColorStop(0.7, b.c + hex);
+    bg.addColorStop(1, b.c + '00');
+    ctx.fillStyle = bg;
+    ctx.fillRect(cx - PR, b.y, PR * 2, b.h);
+  }
+  // Warm lit side
+  const litG = ctx.createRadialGradient(cx - PR * 0.35, cy - PR * 0.35, 0, cx, cy, PR);
+  litG.addColorStop(0, 'rgba(205,139,82,0.20)');
+  litG.addColorStop(0.45, 'rgba(184,115,51,0.07)');
+  litG.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = litG;
+  ctx.fillRect(cx - PR, cy - PR, PR * 2, PR * 2);
+  // Limb darkening
+  const limbG = ctx.createRadialGradient(cx, cy, PR * 0.60, cx, cy, PR);
+  limbG.addColorStop(0, 'rgba(0,0,0,0)');
+  limbG.addColorStop(0.7, 'rgba(0,0,0,0)');
+  limbG.addColorStop(1, 'rgba(0,0,0,0.75)');
+  ctx.fillStyle = limbG;
+  ctx.fillRect(cx - PR, cy - PR, PR * 2, PR * 2);
+  // Specular
+  const specG = ctx.createRadialGradient(
+    cx - PR * 0.38, cy - PR * 0.38, 0,
+    cx - PR * 0.38, cy - PR * 0.38, PR * 0.55
+  );
+  specG.addColorStop(0, 'rgba(245,242,236,0.22)');
+  specG.addColorStop(0.5, 'rgba(245,242,236,0.05)');
+  specG.addColorStop(1, 'rgba(245,242,236,0)');
+  ctx.fillStyle = specG;
+  ctx.fillRect(cx - PR, cy - PR, PR * 2, PR * 2);
+  ctx.restore();
+
+  // Results arc text (partial arc with gap, flat 2D)
+  const GAP_S   = Math.PI * 1.55;
+  const GAP_E   = -Math.PI * 0.52;
+  const arcSpan = GAP_S - GAP_E;
+
+  ctx.save();
+  ctx.strokeStyle = COPPER_DARK;
+  ctx.lineWidth = 2.5;
+  ctx.globalAlpha = 0.22;
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR, GAP_E, GAP_S);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = COPPER;
+  ctx.lineWidth = 26;
+  ctx.globalAlpha = 0.06;
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR, GAP_E, GAP_S);
+  ctx.stroke();
+  ctx.restore();
+
+  const resUnit   = 'Results  ›  ';          // one repeat unit
+  const resFontSz = Math.max(11, PR * 0.175);
+  const charArcW  = resFontSz * 0.60;         // px per character on arc
+  const unitPx    = resUnit.length * charArcW; // px for one full repeat
+  const arcLenPx  = PR * arcSpan;             // true arc length in px
+  // How many full repeat units fit without overlap?
+  const nUnits    = Math.floor(arcLenPx / unitPx);
+  // Total characters placed = exact multiple of unit length → no overlap
+  const resStr    = resUnit.repeat(Math.max(1, nUnits));
+  const nRes      = resStr.length;
+  // Scroll offset driven by ring[1] angle
+  const resOff    = (rings[1].angle % (Math.PI * 2)) / (Math.PI * 2);
+
+  ctx.font = `400 ${resFontSz}px 'Palatino Linotype', Palatino, Georgia, serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (let ci = 0; ci < nRes; ci++) {
+    const frac       = ((ci / nRes) + resOff) % 1;
+    const theta      = GAP_E + frac * arcSpan;
+    const px2        = cx + PR * Math.cos(theta);
+    const py2        = cy + PR * Math.sin(theta);
+    const tangAngle  = theta + Math.PI / 2;
+    const ch         = resStr[ci];
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle   = COPPER_BRIGHT;
+    ctx.shadowColor = COPPER;
+    ctx.shadowBlur  = 8;
+    ctx.translate(px2, py2);
+    ctx.rotate(tangAngle);
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+  }
+
+  // Center dot
+  ctx.save();
+  const dotG = ctx.createRadialGradient(cx - 3, cy - 3, 0, cx, cy, PR * 0.11);
+  dotG.addColorStop(0, COPPER_BRIGHT);
+  dotG.addColorStop(1, COPPER_DARK);
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR * 0.11, 0, Math.PI * 2);
+  ctx.fillStyle   = dotG;
+  ctx.shadowColor = COPPER;
+  ctx.shadowBlur  = 10;
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ── Animation loop ─────────────────────────────────────────── */
+let last = null;
+function animate(ts) {
+  if (!last) last = ts;
+  const dt = Math.min(ts - last, 48);
+  last = ts;
+
+  rings.forEach(r => { r.angle += r.speed * dt; });
+
+  ctx.clearRect(0, 0, W, H);
+
+  drawRing(rings[0]);
+  drawRing(rings[1]);
+  drawPlanet();
+
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

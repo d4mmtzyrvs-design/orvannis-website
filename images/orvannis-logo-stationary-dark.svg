@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Orvannis Stationary Logo — Dark Version (dark/basalt backgrounds) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 180" width="620" height="180">
+  <defs>
+    <linearGradient id="copperGradD" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#CD8B52"/>
+      <stop offset="45%"  stop-color="#B87333"/>
+      <stop offset="100%" stop-color="#9C5A2C"/>
+    </linearGradient>
+    <radialGradient id="stoneGradD" cx="36%" cy="32%" r="68%">
+      <stop offset="0%"   stop-color="#5C564E"/>
+      <stop offset="30%"  stop-color="#4A4540"/>
+      <stop offset="62%"  stop-color="#33302B"/>
+      <stop offset="100%" stop-color="#1A1713"/>
+    </radialGradient>
+    <radialGradient id="specGradD" cx="32%" cy="28%" r="42%">
+      <stop offset="0%"   stop-color="rgba(245,242,236,0.26)"/>
+      <stop offset="55%"  stop-color="rgba(205,139,82,0.07)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+    <clipPath id="planetClipD">
+      <circle cx="90" cy="90" r="60"/>
+    </clipPath>
+    <linearGradient id="ruleGradD" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="transparent"/>
+      <stop offset="15%"  stop-color="#B87333"/>
+      <stop offset="50%"  stop-color="#CD8B52"/>
+      <stop offset="85%"  stop-color="#B87333"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ══ PLANET O MARK ══ -->
+  <circle cx="90" cy="90" r="60" fill="url(#stoneGradD)"/>
+  <g clip-path="url(#planetClipD)">
+    <rect x="30" y="52"  width="120" height="7"  fill="#CD8B52" opacity="0.11"/>
+    <rect x="30" y="65"  width="120" height="6"  fill="#B87333" opacity="0.15"/>
+    <rect x="30" y="79"  width="120" height="13" fill="#B87333" opacity="0.20"/>
+    <rect x="30" y="100" width="120" height="7"  fill="#9C5A2C" opacity="0.13"/>
+    <rect x="30" y="115" width="120" height="5"  fill="#9C5A2C" opacity="0.08"/>
+    <ellipse cx="65" cy="62" rx="50" ry="40" fill="rgba(205,139,82,0.14)"/>
+    <!-- Copper band ring around planet -->
+    <circle cx="90" cy="90" r="60" fill="none" stroke="#B87333" stroke-width="10" stroke-opacity="0.72"/>
+    <circle cx="90" cy="90" r="60" fill="url(#specGradD)"/>
+  </g>
+
+  <!-- Outer ring — restored to subtle stone -->
+  <circle cx="90" cy="90" r="76"
+    fill="none" stroke="#8A8178" stroke-width="1.5" stroke-opacity="0.30"/>
+
+  <!-- Copper arc 315° -->
+  <path d="M 76.8,164.9 A 76,76 0 1 1 27.7,133.6"
+    fill="none" stroke="url(#copperGradD)" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- Arrowhead -->
+  <polygon points="27.7,133.6  36.9,126.4  22.5,123.2" fill="#CD8B52" opacity="0.92"/>
+
+  <!-- Center dot -->
+  <circle cx="90" cy="90" r="5.5" fill="#B87333" opacity="0.88"/>
+  <circle cx="87.5" cy="87.5" r="2" fill="#CD8B52" opacity="0.72"/>
+
+  <!-- ══ WORDMARK — flipped to limestone for dark bg ══ -->
+  <!-- Brand name: copper O + limestone rvannis -->
+  <text
+    x="174" y="83"
+    font-family="'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif"
+    font-size="54" font-weight="400" letter-spacing="3.5"
+    fill="#CD8B52">o<tspan fill="#E7E1D8">rvannis</tspan></text>
+
+  <rect x="174" y="97" width="422" height="1" fill="url(#ruleGradD)" opacity="0.70"/>
+
+  <text
+    x="176" y="120"
+    font-family="Georgia, 'Palatino Linotype', Palatino, serif"
+    font-size="10.5" font-weight="400" letter-spacing="3.0"
+    fill="#B8B0A8">EXPERTISE  ·  HUMAN-LED AUTOMATION  ·  RESULTS</text>
+
+  <text
+    x="596" y="143"
+    font-family="Georgia, serif"
+    font-size="9" font-weight="400" letter-spacing="1.6"
+    fill="#CD8B52" opacity="0.85"
+    text-anchor="end">Strategy, automated.</text>
+
+</svg>

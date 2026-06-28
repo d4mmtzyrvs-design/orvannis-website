@@ -1,0 +1,226 @@
+/* About Page */
+
+.about-story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.about-quote {
+  margin-top: var(--space-8);
+  padding: var(--space-6) var(--space-8);
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-primary-highlight);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-lg);
+  color: var(--color-heading);
+  max-width: none;
+}
+
+.copper-stone-diagram {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+
+.diagram-concept {
+  display: flex;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+}
+
+.diagram-concept--copper {
+  background: linear-gradient(135deg, rgba(184, 115, 51, 0.08), rgba(205, 139, 82, 0.04));
+  border-color: rgba(184, 115, 51, 0.25);
+}
+
+.diagram-concept--stone {
+  background: linear-gradient(135deg, rgba(51, 48, 43, 0.04), rgba(138, 129, 120, 0.04));
+}
+
+.diagram-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.diagram-concept--stone .diagram-icon {
+  color: var(--color-text-muted);
+}
+
+.diagram-title {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  color: var(--color-heading);
+  margin-bottom: var(--space-1);
+}
+
+.diagram-concept p {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  max-width: none;
+}
+
+/* MISSION */
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-8);
+  margin-top: var(--space-10);
+  align-items: stretch;
+}
+
+/* Make perspective-wrap and card-3d fill full row height */
+.mission-grid .perspective-wrap {
+  display: flex;
+  flex-direction: column;
+}
+.mission-grid .card-3d {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.mission-grid .card-body {
+  flex: 1;
+}
+
+.mission-item h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-heading);
+  margin-bottom: var(--space-3);
+}
+
+.mission-item p {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+.cta-inner {
+  padding: var(--space-12) var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .about-story-grid {
+    grid-template-columns: 1fr;
+  }
+  .mission-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Founder profile photo placeholder ── */
+.founder-avatar {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: var(--sp-5);
+  border: 1px solid rgba(184, 115, 51, 0.2);
+}
+
+/* Real photo — just swap in the <img> with this class */
+.founder-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+/* Placeholder shown until photo is added */
+.founder-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, #2A2720 0%, #1A1815 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 220px;
+}
+
+.founder-initials {
+  font-family: var(--font-display, 'Cormorant Garamond', serif);
+  font-size: 3rem;
+  font-weight: 500;
+  color: var(--color-copper, #B87333);
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.founder-photo-hint {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(184, 115, 51, 0.45);
+}
+
+/* ── ABOUT HERO PAGE SECTION ── */
+.section--hero-page {
+  padding-block: clamp(var(--sp-12), 8vw, var(--sp-24));
+  border-bottom: 1px solid var(--color-divider);
+}
+
+/* ── ABOUT FOUNDER GRID ── */
+.about-founder-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(var(--sp-12), 8vw, var(--sp-20));
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .about-founder-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── FOUNDER PORTRAIT ── */
+.founder-portrait {
+  margin-bottom: var(--sp-6);
+  max-width: 220px;
+}
+.founder-portrait img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+}
+.founder-portrait-caption {
+  margin-top: var(--sp-3);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+.founder-portrait-caption a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.founder-portrait-caption a:hover { color: var(--color-primary-hover); }

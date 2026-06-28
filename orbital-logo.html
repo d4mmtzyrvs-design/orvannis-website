@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orvannis Orbital Logo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%; height: 100%;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+const COPPER        = '#B87333';
+const COPPER_BRIGHT = '#CD8B52';
+const COPPER_DARK   = '#9C5A2C';
+
+let W, H, cx, cy;
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.offsetWidth;
+  const cssH = canvas.offsetHeight;
+  canvas.width  = cssW * dpr;
+  canvas.height = cssH * dpr;
+  ctx.scale(dpr, dpr);
+  W  = cssW;
+  H  = cssH;
+  cx = W / 2;
+  cy = H / 2;
+}
+resize();
+window.addEventListener('resize', resize);
+
+/* ── Ring definitions ────────────────────────────────────────────
+   tiltX / tiltY: fixed tilt of the ring's orbital plane (radians)
+   angle:         current spin angle around the ring's own axis
+   speed:         spin speed (radians per ms)
+*/
+const rings = [
+  {
+    label:     'Expertise',
+    radius:    0.39,
+    tiltX:     0.68,   // pitch (nose-up)
+    tiltY:    -0.30,   // yaw
+    speed:     0.00052,   // middle speed
+    angle:     Math.PI * 0.08,
+    color:     COPPER_BRIGHT,   // lightest
+    glowColor: COPPER_BRIGHT,
+    fontSize:  0.030,
+    fontFloor: 15,
+  },
+  {
+    label:     'Human-Led Automation',
+    radius:    0.305,
+    tiltX:     0.95,   // steeper pitch — visually separates this orbital plane from Results
+    tiltY:     2.05,   // rotated further round so its low point swings toward bottom-right, away from Expertise
+    speed:    -0.00022,   // slowest
+    angle:     Math.PI * 0.12,
+    color:     COPPER,   // middle tone
+    glowColor: COPPER_BRIGHT,
+    fontSize:  0.028,
+    fontFloor: 14,
+    bulge:     { amt: 0.30, theta: 2.3 },   // pushes one side out so the path reads as an uneven oval, not an equidistant circle
+  },
+  {
+    label:     'Results',
+    radius:    0.205,
+    tiltX:     0.42,
+    tiltY:     0.65,
+    speed:     0.00135,   // fastest
+    angle:     Math.PI * 0.30,
+    color:     COPPER_DARK,   // darkest
+    glowColor: COPPER,
+    fontSize:  0.024,
+    fontFloor: 11,
+  },
+];
+
+/* ── 3 × 3 matrix multiply ──────────────────────────────────── */
+function matMul(A, B) {
+  // A and B are flat [9]-element row-major 3×3 matrices
+  const C = new Float64Array(9);
+  for (let r = 0; r < 3; r++)
+    for (let c = 0; c < 3; c++)
+      for (let k = 0; k < 3; k++)
+        C[r*3+c] += A[r*3+k] * B[k*3+c];
+  return C;
+}
+
+/* ── Build the combined rotation matrix for a ring ──────────────
+   Order: spin around local Z first, then tiltX (rotateX), then tiltY (rotateY).
+   This keeps the ring plane fixed in space while the label text orbits.
+*/
+function ringMatrix(ring) {
+  const a = ring.angle;
+  const tx = ring.tiltX;
+  const ty = ring.tiltY;
+
+  // Rz — spin (the ring rotates around its own axis)
+  const Rz = new Float64Array([
+     Math.cos(a), -Math.sin(a), 0,
+     Math.sin(a),  Math.cos(a), 0,
+     0,            0,           1,
+  ]);
+
+  // Rx — tilt around X axis (pitch)
+  const Rx = new Float64Array([
+    1,  0,           0,
+    0,  Math.cos(tx), -Math.sin(tx),
+    0,  Math.sin(tx),  Math.cos(tx),
+  ]);
+
+  // Ry — tilt around Y axis (yaw)
+  const Ry = new Float64Array([
+     Math.cos(ty), 0, Math.sin(ty),
+     0,            1, 0,
+    -Math.sin(ty), 0, Math.cos(ty),
+  ]);
+
+  // Combined: M = Ry · Rx · Rz
+  return matMul(Ry, matMul(Rx, Rz));
+}
+
+/* ── Project a 3D point to 2D screen space with perspective ─── */
+function project(x3, y3, z3) {
+  const fov   = Math.min(W, H) * 2.2;
+  const zOff  = Math.min(W, H) * 0.35;
+  const scale = fov / (fov + z3 + zOff);
+  return { x: cx + x3 * scale, y: cy + y3 * scale, z: z3, scale };
+}
+
+function planetRadius() { return Math.min(W, H) * 0.145; }
+
+/* ── Draw a full 3D rotating ring ───────────────────────────────
+   Characters are placed every ~charW px along the projected arc.
+   Text tangent follows the projected curve so it flows naturally.
+
+   pass === 'back'  → draw only the orbit guide-line/arrow, plus characters
+                       that fall behind the planet (so the planet paints over
+                       them next).
+   pass === 'front' → draw only characters that are in front of the planet
+                       (or simply outside its silhouette), called AFTER the
+                       planet so they read as passing in front of it.
+*/
+function drawRing(ring, pass) {
+  const PR = planetRadius();
+  const rad   = ring.radius * Math.min(W, H);
+  const M     = ringMatrix(ring);
+  const steps = 360;
+  const fs    = Math.max(ring.fontFloor, Math.min(W, H) * ring.fontSize);
+
+  // Pre-project all points
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const theta = (i / steps) * Math.PI * 2;
+    // Local ring coords: circle in XY plane, with an optional one-sided
+    // "bulge" that pushes part of the path outward so the ring reads as an
+    // uneven oval rather than a perfectly round, equidistant orbit.
+    let localRad = rad;
+    if (ring.bulge) {
+      const b = ring.bulge;
+      const lobe = Math.max(0, Math.cos(theta - b.theta));
+      localRad = rad * (1 + b.amt * lobe);
+    }
+    const lx = localRad * Math.cos(theta);
+    const ly = localRad * Math.sin(theta);
+    const lz = 0;
+    // Apply rotation matrix
+    const wx = M[0]*lx + M[1]*ly + M[2]*lz;
+    const wy = M[3]*lx + M[4]*ly + M[5]*lz;
+    const wz = M[6]*lx + M[7]*ly + M[8]*lz;
+    pts.push(project(wx, wy, wz));
+  }
+
+  // Measure total projected arc length
+  let arcLen = 0;
+  let scaleMin = Infinity, scaleMax = -Infinity;
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i].x - pts[i-1].x;
+    const dy = pts[i].y - pts[i-1].y;
+    arcLen += Math.sqrt(dx*dx + dy*dy);
+    if (pts[i].scale < scaleMin) scaleMin = pts[i].scale;
+    if (pts[i].scale > scaleMax) scaleMax = pts[i].scale;
+  }
+  const scaleRange = Math.max(scaleMax - scaleMin, 0.0001);
+
+  // Tile a whole number of label-repeats around the loop so the seam where
+  // it wraps back to the start lands exactly on a repeat boundary — otherwise
+  // the label can collide with itself there (e.g. "Expertise" overlapping
+  // "Expertise" instead of reading as one clean repeating ring) and the
+  // last partial repeat throws off the spacing right at that seam.
+  const arrow  = ring.speed >= 0 ? '›' : '‹';
+  const unit   = ring.label + `  ${arrow}  `;
+  const charW  = fs * 0.60;
+  const unitPx = unit.length * charW;
+  const nUnits = Math.max(1, Math.round(arcLen / unitPx));
+  const nCh    = nUnits * unit.length;
+  const str    = unit.repeat(nUnits);
+
+  ctx.font = `400 ${fs}px 'Palatino Linotype', Palatino, Georgia, serif`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (let ci = 0; ci < nCh; ci++) {
+    const idx   = Math.round((ci / nCh) * steps) % steps;
+    const p     = pts[idx];
+    const pNext = pts[(idx + 2) % steps];
+
+    // Is this character geometrically behind the planet? True only if it
+    // falls within the planet's screen silhouette AND its 3D depth (z) puts
+    // it on the far side — not just "behind" in flat 2D distance.
+    const distFromCenter = Math.hypot(p.x - cx, p.y - cy);
+    const isBehindPlanet = distFromCenter < PR * 0.96 && p.z > 0;
+    if (pass === 'back'  && !isBehindPlanet) continue;
+    if (pass === 'front' &&  isBehindPlanet) continue;
+
+    // Tangent angle in screen space
+    const ang = Math.atan2(pNext.y - p.y, pNext.x - p.x);
+    const ch  = str[ci % str.length];
+
+    // Depth cue: the far side of the ring (smaller projected scale) recedes —
+    // fades and shrinks slightly so it reads as "behind" instead of crossing
+    // the near side of the text at full strength.
+    const depthT = (p.scale - scaleMin) / scaleRange; // 0 = far, 1 = near
+    const depthAlpha = 0.30 + depthT * 0.65;
+    const depthScale = 0.78 + depthT * 0.22;
+
+    ctx.save();
+    ctx.globalAlpha = depthAlpha;
+    ctx.fillStyle   = ring.color;
+    ctx.shadowColor = ring.glowColor;
+    ctx.shadowBlur  = 9;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(ang);
+    ctx.scale(depthScale, depthScale);
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+  }
+
+  if (pass !== 'back') return;
+
+  // ── Reference-style orbit line ──────────────────────────────────
+  // A thin stroked path along the same ellipse, like the orbit lines
+  // in the static mark artwork, with a small arrow chevron riding it.
+  // Drawn once, in the 'back' pass, as a faint full guide ring.
+  ctx.save();
+  ctx.beginPath();
+  for (let i = 0; i <= steps; i++) {
+    const t = pts[i];
+    if (i === 0) ctx.moveTo(t.x, t.y); else ctx.lineTo(t.x, t.y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = ring.glowColor;
+  ctx.globalAlpha = 0.30;
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  ctx.restore();
+
+  // Arrow chevron marker at the ring's nearest (front) point
+  let frontIdx = 0;
+  for (let i = 1; i <= steps; i++) if (pts[i].scale > pts[frontIdx].scale) frontIdx = i;
+  const fp = pts[frontIdx];
+  const fpNext = pts[(frontIdx + 4) % steps];
+  const arrowAng = Math.atan2(fpNext.y - fp.y, fpNext.x - fp.x);
+  ctx.save();
+  ctx.translate(fp.x, fp.y);
+  ctx.rotate(arrowAng);
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = ring.glowColor;
+  ctx.shadowColor = ring.glowColor;
+  ctx.shadowBlur = 6;
+  ctx.beginPath();
+  ctx.moveTo(7, 0);
+  ctx.lineTo(-4, 5);
+  ctx.lineTo(-4, -5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ── Outer frame ring — thick copper band with a gap and chevron,
+   matching the static trademark artwork's outer ring treatment ── */
+
+// Mirrors the createLinearGradient(cx-R,cy-R, cx+R,cy+R) stops below, so the
+// chevron tip can be filled with the gradient's actual color at its position
+// instead of a fixed swatch.
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function lerpColor(c1, c2, t) {
+  const a = hexToRgb(c1), b = hexToRgb(c2);
+  const r = Math.round(a[0] + (b[0] - a[0]) * t);
+  const g = Math.round(a[1] + (b[1] - a[1]) * t);
+  const bl = Math.round(a[2] + (b[2] - a[2]) * t);
+  return `rgb(${r},${g},${bl})`;
+}
+function sampleArcGradient(x, y, R) {
+  // Same projection math the canvas uses internally for a linear gradient:
+  // t = (P - P0) · dir / |dir|^2, where P0=(cx-R,cy-R), P1=(cx+R,cy+R).
+  const p0x = cx - R, p0y = cy - R;
+  const dirX = 2 * R, dirY = 2 * R;
+  const t = Math.max(0, Math.min(1, ((x - p0x) * dirX + (y - p0y) * dirY) / (dirX * dirX + dirY * dirY)));
+  if (t <= 0.45) return lerpColor(COPPER_BRIGHT, COPPER, t / 0.45);
+  return lerpColor(COPPER, COPPER_DARK, (t - 0.45) / 0.55);
+}
+
+let frameAngle = 0;
+function drawFrameRing() {
+  const R = Math.min(W, H) * 0.485;
+  const lw = Math.min(W, H) * 0.026;
+  const gapSize = 0.34; // radians of open gap
+
+  const start = frameAngle;
+  const end   = frameAngle + Math.PI * 2 - gapSize;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, start, end);
+  const arcGrad = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+  arcGrad.addColorStop(0,    COPPER_BRIGHT);
+  arcGrad.addColorStop(0.45, COPPER);
+  arcGrad.addColorStop(1,    COPPER_DARK);
+  ctx.strokeStyle = arcGrad;
+  ctx.lineWidth = lw;
+  ctx.lineCap = 'round';
+  ctx.shadowColor = COPPER;
+  ctx.shadowBlur = 10;
+  ctx.stroke();
+  ctx.restore();
+
+  // Chevron at the open end of the gap. The stroke's round line cap bulges
+  // the visible band forward past the (R, end) centerline point by ~lw/2 —
+  // nudge the chevron forward by the same amount so it sits flush with the
+  // band's actual visual tip instead of looking set back from it.
+  const tangent  = end + Math.PI / 2;
+  const tangentX = Math.cos(tangent), tangentY = Math.sin(tangent);
+  const tipX = cx + R * Math.cos(end) + tangentX * lw * 0.5;
+  const tipY = cy + R * Math.sin(end) + tangentY * lw * 0.5;
+  const tipColor = sampleArcGradient(cx + R * Math.cos(end), cy + R * Math.sin(end), R);
+  ctx.save();
+  ctx.translate(tipX, tipY);
+  ctx.rotate(tangent);
+  ctx.fillStyle = tipColor;
+  ctx.shadowColor = COPPER;
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.moveTo(lw * 0.95, 0);
+  ctx.lineTo(-lw * 0.55, lw * 0.7);
+  ctx.lineTo(-lw * 0.55, -lw * 0.7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // ── Marquee labels riding the outer ring ───────────────────────
+  // Same word list as the homepage solutions marquee, dot-separated,
+  // spaced evenly from the start of the arc to the arrow at its end.
+  const MARQUEE_WORDS = [
+    'Sales', 'Finance', 'Marketing', 'Client onboarding', 'Operations',
+    'Invoicing & billing', 'CRM & relationships', 'Team performance',
+  ];
+  const marqueeStr = MARQUEE_WORDS.join('  ·  ');
+
+  const fs = Math.max(9, R * 0.040);
+  ctx.font = `600 ${fs}px 'Inter', 'Helvetica Neue', sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Measure each character so spacing is exact, not estimated.
+  const widths = [];
+  let totalWidth = 0;
+  for (const ch of marqueeStr) {
+    const w = ctx.measureText(ch).width;
+    widths.push(w);
+    totalWidth += w;
+  }
+
+  let cum = 0;
+  for (let i = 0; i < marqueeStr.length; i++) {
+    const w = widths[i];
+    const center = cum + w / 2;
+    cum += w;
+    const t = center / totalWidth; // 0 at arc start, 1 at the arrow end
+    const theta = start + t * (end - start);
+    const x = cx + R * Math.cos(theta);
+    const y = cy + R * Math.sin(theta);
+    const tangent = theta + Math.PI / 2;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(tangent);
+    ctx.fillStyle = '#F5F1E8'; // cream
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 3;
+    ctx.fillText(marqueeStr[i], 0, 0);
+    ctx.restore();
+  }
+}
+
+/* ── Planet ──────────────────────────────────────────────────── */
+function drawPlanet() {
+  const PR = Math.min(W, H) * 0.145;
+
+  // Drop shadow / halo ring — dark gray right at the planet's edge, holding
+  // until about halfway out, then fading toward white by the original
+  // outer edge (instead of getting darkest right at that outer edge).
+  // Centered exactly on the fill circle (no offset) so the fade reaches
+  // zero alpha uniformly in every direction right at the edge — an offset
+  // center made the fade hit zero early on one side and get clipped before
+  // reaching zero on the other, producing a hard edge there.
+  ctx.save();
+  const shadowG = ctx.createRadialGradient(
+    cx, cy, PR * 0.3,
+    cx, cy, PR * 1.5
+  );
+  shadowG.addColorStop(0,    'rgba(0,0,0,0)');
+  shadowG.addColorStop(0.55, 'rgba(48,44,38,0.62)');
+  shadowG.addColorStop(0.78, 'rgba(48,44,38,0.62)');
+  shadowG.addColorStop(0.92, 'rgba(170,166,158,0.28)');
+  shadowG.addColorStop(1,    'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR * 1.5, 0, Math.PI * 2);
+  ctx.fillStyle = shadowG;
+  ctx.fill();
+  ctx.restore();
+
+  // Stone sphere
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR, 0, Math.PI * 2);
+  const stoneG = ctx.createRadialGradient(
+    cx - PR * 0.32, cy - PR * 0.32, PR * 0.04, cx, cy, PR
+  );
+  stoneG.addColorStop(0.00, '#5C564E');
+  stoneG.addColorStop(0.28, '#4A4540');
+  stoneG.addColorStop(0.58, '#33302B');
+  stoneG.addColorStop(0.85, '#28251F');
+  stoneG.addColorStop(1.00, '#1A1713');
+  ctx.fillStyle = stoneG;
+  ctx.shadowColor = 'rgba(0,0,0,0.9)';
+  ctx.shadowBlur = 28;
+  ctx.fill();
+  ctx.restore();
+
+  // Surface bands — rendered as vertical longitude stripes that sweep
+  // horizontally with planetSpin, foreshortening near the limb, so the
+  // sphere visibly reads as rotating rather than a static striped ball.
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR, 0, Math.PI * 2);
+  ctx.clip();
+  const longitudeBands = [
+    { baseLon: -2.7, a: 0.10, c: COPPER_DARK,   w: 0.16 },
+    { baseLon: -2.1, a: 0.20, c: COPPER_BRIGHT, w: 0.10 },
+    { baseLon: -1.5, a: 0.14, c: COPPER,        w: 0.22 },
+    { baseLon: -0.9, a: 0.24, c: COPPER,        w: 0.12 },
+    { baseLon: -0.3, a: 0.18, c: COPPER_BRIGHT, w: 0.16 },
+    { baseLon:  0.3, a: 0.26, c: COPPER,        w: 0.10 },
+    { baseLon:  0.9, a: 0.15, c: COPPER_DARK,   w: 0.20 },
+    { baseLon:  1.6, a: 0.19, c: COPPER,        w: 0.13 },
+    { baseLon:  2.3, a: 0.11, c: COPPER_DARK,   w: 0.18 },
+  ];
+  for (const b of longitudeBands) {
+    const lon = b.baseLon + planetSpin;
+    const cosFactor = Math.cos(lon); // 1 = facing viewer, 0 = at the limb, <0 = far side
+    if (cosFactor < -0.08) continue; // fully on the far side — hidden
+    const sinFactor = Math.sin(lon);
+    const x = cx + sinFactor * PR * 0.94;
+    const width = Math.max(PR * 0.045, PR * b.w * Math.max(0.12, cosFactor) * 1.4);
+    const alpha = b.a * Math.max(0, Math.min(1, cosFactor + 0.15));
+    const hex = Math.round(alpha * 255).toString(16).padStart(2, '0');
+    const bg = ctx.createLinearGradient(x - width / 2, cy, x + width / 2, cy);
+    bg.addColorStop(0,   b.c + '00');
+    bg.addColorStop(0.5, b.c + hex);
+    bg.addColorStop(1,   b.c + '00');
+    ctx.fillStyle = bg;
+    ctx.fillRect(x - width / 2, cy - PR, width, PR * 2);
+  }
+  // Warm lit side
+  const litG = ctx.createRadialGradient(cx - PR * 0.35, cy - PR * 0.35, 0, cx, cy, PR);
+  litG.addColorStop(0, 'rgba(205,139,82,0.20)');
+  litG.addColorStop(0.45, 'rgba(184,115,51,0.07)');
+  litG.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = litG;
+  ctx.fillRect(cx - PR, cy - PR, PR * 2, PR * 2);
+  // Limb darkening
+  const limbG = ctx.createRadialGradient(cx, cy, PR * 0.60, cx, cy, PR);
+  limbG.addColorStop(0, 'rgba(0,0,0,0)');
+  limbG.addColorStop(0.7, 'rgba(0,0,0,0)');
+  limbG.addColorStop(1, 'rgba(0,0,0,0.75)');
+  ctx.fillStyle = limbG;
+  ctx.fillRect(cx - PR, cy - PR, PR * 2, PR * 2);
+  // Specular — brighter, tighter highlight to match the reference artwork's
+  // punchier sphere lighting
+  const specG = ctx.createRadialGradient(
+    cx - PR * 0.38, cy - PR * 0.38, 0,
+    cx - PR * 0.38, cy - PR * 0.38, PR * 0.5
+  );
+  specG.addColorStop(0,   'rgba(250,247,240,0.45)');
+  specG.addColorStop(0.4, 'rgba(250,247,240,0.14)');
+  specG.addColorStop(1,   'rgba(250,247,240,0)');
+  ctx.fillStyle = specG;
+  ctx.fillRect(cx - PR, cy - PR, PR * 2, PR * 2);
+  ctx.restore();
+
+  // Center dot
+  ctx.save();
+  const dotG = ctx.createRadialGradient(cx - 3, cy - 3, 0, cx, cy, PR * 0.11);
+  dotG.addColorStop(0, COPPER_BRIGHT);
+  dotG.addColorStop(1, COPPER_DARK);
+  ctx.beginPath();
+  ctx.arc(cx, cy, PR * 0.11, 0, Math.PI * 2);
+  ctx.fillStyle   = dotG;
+  ctx.shadowColor = COPPER;
+  ctx.shadowBlur  = 10;
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ── Animation loop ─────────────────────────────────────────── */
+let last = null;
+let planetSpin = 0;
+function animate(ts) {
+  if (!last) last = ts;
+  const dt = Math.min(ts - last, 48);
+  last = ts;
+
+  rings.forEach(r => { r.angle += r.speed * dt; });
+  frameAngle  += 0.00018 * dt;
+  planetSpin  += 0.00038 * dt;
+
+  ctx.clearRect(0, 0, W, H);
+
+  drawFrameRing();
+
+  // Back pass — characters that fall behind the planet's silhouette get
+  // drawn first so the sphere paints over them.
+  rings.forEach(r => drawRing(r, 'back'));
+
+  drawPlanet();
+
+  // Front pass — everything else (in front of, or outside, the sphere)
+  // is drawn after, so it reads as passing in front of the planet.
+  rings.forEach(r => drawRing(r, 'front'));
+
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

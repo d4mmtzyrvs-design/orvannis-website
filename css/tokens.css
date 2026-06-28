@@ -1,0 +1,174 @@
+/* =====================================================
+   ORVANNIS DESIGN TOKENS — v2
+   Palette: Deep Slate + Warm Copper
+   ===================================================== */
+
+:root,
+[data-theme='light'] {
+
+  /* === COPPER ACCENT (unchanged — brand-critical) === */
+  --copper:        #B87333;
+  --copper-bright: #D4924A;
+  --copper-muted:  #9C5A2C;
+  --copper-pale:   rgba(184,115,51,0.10);
+  --copper-glow:   rgba(184,115,51,0.20);
+
+  /* === SLATE / STONE — richer, deeper === */
+  --slate-900:  #1C1A17;   /* near-black warm */
+  --slate-800:  #415A6B;   /* bold dark blue-slate */
+  --slate-heading: #415A6B; /* heading-only slate */
+  --slate-700:  #3D3930;   /* dark warm stone */
+  --slate-500:  #6B6560;   /* mid stone */
+  --slate-300:  #AEA89F;   /* cool stone */
+  --slate-100:  #D9D3CA;   /* limestone */
+  --slate-50:   #EDE8E0;   /* pale stone */
+  --paper:      #E8E2D4;   /* darker warm cream */
+  --paper-pure: #FAF8F4;   /* near-white */
+
+  /* === SEMANTIC TOKENS === */
+  --color-bg:             var(--paper);
+  --color-surface:        var(--paper-pure);
+  --color-surface-2:      #FFFFFF;
+  --color-surface-raised: var(--paper-pure);
+  --color-surface-offset: var(--slate-50);
+  --color-divider:        var(--slate-100);
+  --color-border:         #CEC8BF;
+  --color-border-strong:  var(--slate-300);
+
+  --color-text:           #33302A;   /* neutral dark — body, nav links */
+  --color-heading:        var(--slate-heading); /* titles + brand name only */
+  --color-text-muted:     var(--slate-500);
+  --color-text-faint:     var(--slate-300);
+  --color-text-inverse:   var(--paper);
+
+  --color-primary:        var(--copper);
+  --color-primary-hover:  var(--copper-muted);
+  --color-primary-active: #7A4220;
+  --color-primary-pale:   var(--copper-pale);
+  --color-primary-glow:   var(--copper-glow);
+
+  /* === TYPE SCALE (fluid) === */
+  --text-xs:   clamp(0.6875rem, 0.65rem + 0.19vw, 0.8125rem);
+  --text-sm:   clamp(0.8125rem, 0.77rem + 0.21vw, 0.9375rem);
+  --text-base: clamp(0.9375rem, 0.9rem + 0.19vw, 1.0625rem);
+  --text-md:   clamp(1.0625rem, 1rem + 0.31vw, 1.25rem);
+  --text-lg:   clamp(1.25rem, 1.1rem + 0.75vw, 1.75rem);
+  --text-xl:   clamp(1.625rem, 1.2rem + 1.25vw, 2.5rem);
+  --text-2xl:  clamp(2.25rem, 1.4rem + 2.75vw, 4rem);
+  --text-3xl:  clamp(3rem,    1rem  + 5vw,   6rem);
+  --text-hero: clamp(3.5rem,  0.5rem + 7.5vw, 8.5rem);
+
+  /* === SPACING (4px grid) === */
+  --sp-1:  0.25rem;   /*  4px */
+  --sp-2:  0.5rem;    /*  8px */
+  --sp-3:  0.75rem;   /* 12px */
+  --sp-4:  1rem;      /* 16px */
+  --sp-5:  1.25rem;   /* 20px */
+  --sp-6:  1.5rem;    /* 24px */
+  --sp-8:  2rem;      /* 32px */
+  --sp-10: 2.5rem;    /* 40px */
+  --sp-12: 3rem;      /* 48px */
+  --sp-16: 4rem;      /* 64px */
+  --sp-20: 5rem;      /* 80px */
+  --sp-24: 6rem;      /* 96px */
+  --sp-32: 8rem;      /* 128px */
+
+  /* === TYPOGRAPHY === */
+  --font-display: 'Cormorant Garamond', 'Instrument Serif', Georgia, serif;
+  --font-body:    'Inter', 'Helvetica Neue', sans-serif;
+
+  /* === RADIUS === */
+  --r-sm:   0.25rem;
+  --r-md:   0.5rem;
+  --r-lg:   0.875rem;
+  --r-xl:   1.25rem;
+  --r-2xl:  2rem;
+  --r-full: 9999px;
+
+  /* === MOTION === */
+  --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:   cubic-bezier(0.4, 0, 1, 1);
+  --ease-io:   cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast:  140ms;
+  --dur-base:  240ms;
+  --dur-slow:  400ms;
+
+  /* === SHADOWS (warm-tinted) === */
+  --shadow-xs: 0 1px 2px rgba(44,36,22,0.06);
+  --shadow-sm: 0 2px 6px rgba(44,36,22,0.07), 0 1px 2px rgba(44,36,22,0.05);
+  --shadow-md: 0 6px 20px rgba(44,36,22,0.09), 0 2px 6px rgba(44,36,22,0.06);
+  --shadow-lg: 0 16px 48px rgba(44,36,22,0.12), 0 4px 12px rgba(44,36,22,0.07);
+  --shadow-xl: 0 32px 80px rgba(44,36,22,0.16), 0 8px 24px rgba(44,36,22,0.08);
+  --shadow-copper: 0 8px 32px rgba(184,115,51,0.25);
+
+  /* === CONTENT WIDTHS === */
+  --w-text:   640px;
+  --w-normal: 960px;
+  --w-wide:   1200px;
+  --w-full:   100%;
+}
+
+/* ======================== DARK MODE ======================== */
+[data-theme='dark'] {
+  --color-bg:             #131210;
+  --color-surface:        #1A1815;
+  --color-surface-2:      #201E1A;
+  --color-surface-raised: #242118;
+  --color-surface-offset: #18160F;
+  --color-divider:        #2C2920;
+  --color-border:         #38342A;
+  --color-border-strong:  #4A4538;
+
+  --color-text:           #E5DFD4;
+  --color-text-muted:     #8A8070;
+  --color-text-faint:     #524D42;
+  --color-text-inverse:   #131210;
+
+  --color-primary:        #D4924A;
+  --color-primary-hover:  #E5A55A;
+  --color-primary-active: #B87333;
+  --color-primary-pale:   rgba(212,146,74,0.12);
+  --color-primary-glow:   rgba(212,146,74,0.22);
+
+  --copper:        #D4924A;
+  --copper-bright: #E5A55A;
+  --copper-muted:  #B87333;
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.25);
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.30);
+  --shadow-md: 0 6px 20px rgba(0,0,0,0.35);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,0.45);
+  --shadow-xl: 0 32px 80px rgba(0,0,0,0.55);
+  --shadow-copper: 0 8px 32px rgba(212,146,74,0.20);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color-bg:             #131210;
+    --color-surface:        #1A1815;
+    --color-surface-2:      #201E1A;
+    --color-surface-raised: #242118;
+    --color-surface-offset: #18160F;
+    --color-divider:        #2C2920;
+    --color-border:         #38342A;
+    --color-border-strong:  #4A4538;
+    --color-text:           #E5DFD4;
+    --color-text-muted:     #8A8070;
+    --color-text-faint:     #524D42;
+    --color-text-inverse:   #131210;
+    --color-primary:        #D4924A;
+    --color-primary-hover:  #E5A55A;
+    --color-primary-active: #B87333;
+    --color-primary-pale:   rgba(212,146,74,0.12);
+    --color-primary-glow:   rgba(212,146,74,0.22);
+    --copper: #D4924A;
+    --copper-bright: #E5A55A;
+    --copper-muted: #B87333;
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.25);
+    --shadow-sm: 0 2px 6px rgba(0,0,0,0.30);
+    --shadow-md: 0 6px 20px rgba(0,0,0,0.35);
+    --shadow-lg: 0 16px 48px rgba(0,0,0,0.45);
+    --shadow-xl: 0 32px 80px rgba(0,0,0,0.55);
+    --shadow-copper: 0 8px 32px rgba(212,146,74,0.20);
+  }
+}

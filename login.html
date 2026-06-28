@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Login — Orvannis</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="site.config.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/main.js" defer></script>
+  <style>
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--sp-8);
+      background: var(--color-bg);
+    }
+    .login-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--r-xl);
+      padding: var(--sp-10);
+      width: 100%;
+      max-width: 420px;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+    .login-card::before {
+      content: '';
+      display: block;
+      height: 3px;
+      margin: calc(-1 * var(--sp-10)) calc(-1 * var(--sp-10)) var(--sp-8);
+      border-radius: var(--r-xl) var(--r-xl) 0 0;
+      background: linear-gradient(90deg, transparent 5%, var(--copper-muted) 30%, var(--copper-bright) 50%, var(--copper-muted) 70%, transparent 95%);
+    }
+    .login-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--r-full);
+      background: var(--color-primary-pale);
+      border: 1px solid var(--color-primary-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-primary);
+      margin: 0 auto var(--sp-5);
+    }
+    .login-title {
+      font-family: var(--font-display);
+      font-size: var(--text-xl);
+      color: var(--color-heading);
+      margin-bottom: var(--sp-2);
+    }
+    .login-subtitle {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-bottom: var(--sp-8);
+    }
+    .login-form { display: flex; flex-direction: column; gap: var(--sp-4); text-align: left; }
+    .login-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: var(--sp-2);
+      display: block;
+    }
+    .login-input {
+      width: 100%;
+      padding: var(--sp-3) var(--sp-4);
+      font-size: var(--text-sm);
+      font-family: var(--font-body);
+      color: var(--color-text);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--r-md);
+      outline: none;
+      transition: border-color var(--dur-fast) var(--ease-out),
+                  box-shadow var(--dur-fast) var(--ease-out);
+    }
+    .login-input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-pale);
+    }
+    .login-note {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      margin-top: var(--sp-6);
+    }
+    .login-back {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      margin-top: var(--sp-5);
+      transition: color var(--dur-fast) var(--ease-out);
+    }
+    .login-back:hover { color: var(--color-primary); }
+    .badge-placeholder {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-faint);
+      border: 1px dashed var(--color-border);
+      border-radius: var(--r-full);
+      padding: var(--sp-1) var(--sp-3);
+      margin-bottom: var(--sp-6);
+    }
+  </style>
+</head>
+<body>
+
+<main class="login-page">
+  <div class="login-card">
+    <div class="login-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    </div>
+    <span class="badge-placeholder">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="5"/></svg>
+      Coming Soon
+    </span>
+    <h1 class="login-title">Customer Login</h1>
+    <p class="login-subtitle">Access your Orvannis account. The platform is currently in development.</p>
+
+    <form class="login-form" onsubmit="return false;">
+      <div>
+        <label class="login-label" for="login-email">Email</label>
+        <input class="login-input" type="email" id="login-email" placeholder="you@yourcompany.com" autocomplete="email">
+      </div>
+      <div>
+        <label class="login-label" for="login-pass">Password</label>
+        <input class="login-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:var(--sp-2)" disabled>
+        Sign In — Coming Soon
+      </button>
+    </form>
+
+    <p class="login-note">Not a client yet? <a href="contact.html" style="color:var(--color-primary)">Book a discovery call</a> to get early access.</p>
+
+    <a href="index.html" class="login-back">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to site
+    </a>
+  </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Orvannis Nav Logo — Light Version -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 88" width="480" height="88">
+  <defs>
+    <radialGradient id="nstoneGrad" cx="36%" cy="32%" r="68%">
+      <stop offset="0%"   stop-color="#5C564E"/>
+      <stop offset="30%"  stop-color="#4A4540"/>
+      <stop offset="62%"  stop-color="#33302B"/>
+      <stop offset="100%" stop-color="#1A1713"/>
+    </radialGradient>
+    <radialGradient id="nspecGrad" cx="32%" cy="28%" r="42%">
+      <stop offset="0%"   stop-color="rgba(245,242,236,0.26)"/>
+      <stop offset="55%"  stop-color="rgba(205,139,82,0.07)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+    <linearGradient id="narcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#CD8B52"/>
+      <stop offset="45%"  stop-color="#B87333"/>
+      <stop offset="100%" stop-color="#9C5A2C"/>
+    </linearGradient>
+    <clipPath id="nclip">
+      <circle cx="44" cy="44" r="38"/>
+    </clipPath>
+    <linearGradient id="nruleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="transparent"/>
+      <stop offset="15%"  stop-color="#B87333"/>
+      <stop offset="60%"  stop-color="#CD8B52"/>
+      <stop offset="90%"  stop-color="#B87333"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Planet sphere (cy=44, r=38 → spans y=6 to y=82 — fully within 88px height) -->
+  <circle cx="44" cy="44" r="38" fill="url(#nstoneGrad)"/>
+
+  <!-- Surface bands (clipped inside sphere) -->
+  <g clip-path="url(#nclip)">
+    <rect x="6"  y="25" width="76" height="5"  fill="#CD8B52" opacity="0.11"/>
+    <rect x="6"  y="33" width="76" height="4"  fill="#B87333" opacity="0.15"/>
+    <rect x="6"  y="42" width="76" height="9"  fill="#B87333" opacity="0.20"/>
+    <rect x="6"  y="56" width="76" height="5"  fill="#9C5A2C" opacity="0.13"/>
+    <rect x="6"  y="67" width="76" height="4"  fill="#9C5A2C" opacity="0.08"/>
+    <ellipse cx="30" cy="28" rx="30" ry="22" fill="rgba(205,139,82,0.14)"/>
+    <circle cx="44" cy="44" r="38" fill="none" stroke="#B87333" stroke-width="7" stroke-opacity="0.72"/>
+    <circle cx="44" cy="44" r="38" fill="url(#nspecGrad)"/>
+  </g>
+
+  <!-- Copper orbital arc (gap at lower-left, stays within viewport) -->
+  <!-- r=44 orbit: start at 270° (top) going clockwise, gap ~45° at bottom-left -->
+  <!-- Start 265°: (44+44·cos265°, 44+44·sin265°) = (44-3.8, 44+43.8) = (40.2, 87.8) — at edge -->
+  <!-- Use r=42 to keep arc within 88px box -->
+  <!-- Start 260°: (44+42·cos260°, 44+42·sin260°) = (44-7.3, 44+41.4) = (36.7, 85.4) -->
+  <!-- End   215°: (44+42·cos215°, 44+42·sin215°) = (44-34.4, 44+24.1) = (9.6, 68.1) -->
+  <path d="M 36.7,85.4 A 42,42 0 1 1 9.6,68.1"
+    fill="none"
+    stroke="url(#narcGrad)"
+    stroke-width="2.0"
+    stroke-linecap="round"/>
+
+  <!-- Center dot -->
+  <circle cx="44" cy="44" r="3.2" fill="#B87333" opacity="0.88"/>
+  <circle cx="42.5" cy="42.5" r="1.2" fill="#CD8B52" opacity="0.72"/>
+
+  <!-- Wordmark: copper o + text rvannis -->
+  <!-- font-size 44, baseline y=56 → cap height roughly at y=17, descenders at y=60 -->
+  <text
+    x="93" y="56"
+    font-family="'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif"
+    font-size="44" font-weight="400" letter-spacing="2"
+    fill="#B87333">o<tspan fill="#33302B">rvannis</tspan></text>
+
+  <!-- Copper rule: from wordmark start to ~wordmark end (~320px wide at this font size) -->
+  <rect x="93" y="65" width="310" height="0.8" fill="url(#nruleGrad)" opacity="0.60"/>
+
+</svg>

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orvannis Site Editor</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <script src="site.config.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --copper: #B87333;
+      --copper-light: #D4924A;
+      --bg: #F4F0E8;
+      --surface: #FAF8F4;
+      --surface2: #fff;
+      --border: #CEC8BF;
+      --divider: #D9D3CA;
+      --text: #2A2720;
+      --muted: #6B6560;
+      --faint: #AEA89F;
+      --accent: #B87333;
+      --radius: 10px;
+      --sidebar: 340px;
+    }
+
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: #1C1A17; color: var(--text); }
+
+    /* ── SHELL ── */
+    .shell { display: grid; grid-template-columns: var(--sidebar) 1fr; grid-template-rows: 52px 1fr; height: 100vh; overflow: hidden; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      grid-column: 1 / -1;
+      background: #131210;
+      border-bottom: 1px solid #2C2920;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      gap: 12px;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .topbar-brand svg { flex-shrink: 0; }
+    .topbar-title { font-size: 13px; font-weight: 600; color: #E5DFD4; letter-spacing: 0.06em; }
+    .topbar-sub   { font-size: 11px; color: #524D42; letter-spacing: 0.04em; margin-left: 4px; }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+
+    .tb-btn {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .tb-btn--ghost { background: transparent; color: #8A8070; border-color: #38342A; }
+    .tb-btn--ghost:hover { background: #1A1815; color: #E5DFD4; }
+    .tb-btn--copper { background: linear-gradient(135deg, var(--copper), #9C5A2C); color: #fff; border-color: #9C5A2C; }
+    .tb-btn--copper:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(184,115,51,0.35); }
+    .tb-btn--copper:active { transform: none; }
+
+    .save-status { font-size: 11px; color: #524D42; letter-spacing: 0.04em; }
+    .save-status.saved { color: #6daa45; }
+    .save-status.unsaved { color: var(--copper-light); }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: #1A1815;
+      border-right: 1px solid #2C2920;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: #38342A; border-radius: 4px; }
+
+    /* Tab strip */
+    .tab-strip {
+      display: flex;
+      border-bottom: 1px solid #2C2920;
+      flex-shrink: 0;
+      background: #131210;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      color: #524D42;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .tab:hover { color: #8A8070; }
+    .tab.active { color: var(--copper-light); border-bottom-color: var(--copper-light); }
+
+    /* Panels */
+    .panel { display: none; padding: 16px; flex-direction: column; gap: 20px; }
+    .panel.active { display: flex; }
+
+    /* Field groups */
+    .field-group { display: flex; flex-direction: column; gap: 12px; }
+    .group-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #524D42;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #2C2920;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #8A8070;
+      letter-spacing: 0.03em;
+    }
+    .field input[type="text"],
+    .field input[type="email"],
+    .field textarea {
+      background: #131210;
+      border: 1px solid #38342A;
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 12px;
+      color: #E5DFD4;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+      resize: vertical;
+    }
+    .field input:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: var(--copper);
+      box-shadow: 0 0 0 2px rgba(184,115,51,0.15);
+    }
+    .field input[type="color"] {
+      height: 36px;
+      width: 100%;
+      border: 1px solid #38342A;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #131210;
+      padding: 2px;
+    }
+
+    /* Toggle field */
+    .field-toggle { flex-direction: row; align-items: center; justify-content: space-between; }
+    .field-toggle label { flex: 1; }
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #38342A;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #524D42;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--copper); }
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(16px);
+      background: #fff;
+    }
+
+    /* Color swatch grid */
+    .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── PREVIEW PANE ── */
+    .preview-pane {
+      background: #0E0D0B;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: #131210;
+      border-bottom: 1px solid #2C2920;
+      flex-shrink: 0;
+    }
+    .preview-url {
+      flex: 1;
+      background: #1A1815;
+      border: 1px solid #2C2920;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 11px;
+      color: #524D42;
+      letter-spacing: 0.04em;
+      font-family: 'Inter', monospace;
+    }
+    .page-btn {
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid #38342A;
+      background: transparent;
+      color: #524D42;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .page-btn:hover { background: #1A1815; color: #8A8070; }
+    .page-btn.active { background: #2C2920; color: var(--copper-light); border-color: var(--copper); }
+
+    .preview-frame-wrap {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    .preview-frame-wrap::after {
+      content: 'Live Preview';
+      position: absolute;
+      bottom: 12px;
+      right: 14px;
+      font-size: 10px;
+      color: #2C2920;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+    #preview-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #F4F0E8;
+    }
+
+    /* ── EXPORT PANEL ── */
+    .export-box {
+      background: #131210;
+      border: 1px solid #38342A;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .export-box h4 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #E5DFD4;
+      margin-bottom: 6px;
+      letter-spacing: 0.04em;
+    }
+    .export-box p { font-size: 11px; color: #524D42; line-height: 1.6; margin-bottom: 10px; }
+    .export-code {
+      background: #0E0D0B;
+      border: 1px solid #2C2920;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      color: #D4924A;
+      max-height: 120px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .copy-btn {
+      margin-top: 8px;
+      width: 100%;
+      padding: 6px;
+      background: #1A1815;
+      border: 1px solid #38342A;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #8A8070;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { background: #2C2920; color: #E5DFD4; }
+
+    .how-to-box {
+      background: linear-gradient(135deg, rgba(184,115,51,0.08), rgba(184,115,51,0.03));
+      border: 1px solid rgba(184,115,51,0.2);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .how-to-box h4 { font-size: 12px; font-weight: 600; color: var(--copper-light); margin-bottom: 8px; }
+    .how-to-box ol { padding-left: 16px; }
+    .how-to-box li { font-size: 11px; color: #8A8070; line-height: 1.7; margin-bottom: 4px; }
+    .how-to-box li strong { color: #E5DFD4; }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── TOP BAR ── -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <svg width="26" height="26" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <circle cx="17" cy="17" r="16" fill="#2A2720"/>
+        <path d="M17 4 A13 13 0 1 1 7.3 26.5" stroke="#B87333" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <polygon points="4.5,23.5 10.5,27.5 5.5,31" fill="#B87333"/>
+        <circle cx="17" cy="17" r="2.5" fill="#CD8B52"/>
+      </svg>
+      <span class="topbar-title">Orvannis</span>
+      <span class="topbar-sub">Site Editor</span>
+    </div>
+    <div class="topbar-actions">
+      <span class="save-status" id="save-status">All changes saved</span>
+      <button class="tb-btn tb-btn--ghost" onclick="resetToDefaults()">Reset</button>
+      <button class="tb-btn tb-btn--copper" onclick="applyAndSave()">Apply Changes</button>
+    </div>
+  </header>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="tab-strip">
+      <div class="tab active" data-tab="content" onclick="switchTab('content')">Content</div>
+      <div class="tab" data-tab="colors" onclick="switchTab('colors')">Colors</div>
+      <div class="tab" data-tab="layout" onclick="switchTab('layout')">Layout</div>
+      <div class="tab" data-tab="export" onclick="switchTab('export')">Export</div>
+    </div>
+
+    <!-- CONTENT TAB -->
+    <div class="panel active" id="panel-content">
+
+      <div class="field-group">
+        <p class="group-label">Brand</p>
+        <div class="field"><label>Business name</label><input type="text" id="f-brand-name" placeholder="Orvannis"></div>
+        <div class="field"><label>Tagline</label><input type="text" id="f-brand-tagline" placeholder="Strategy, automated."></div>
+        <div class="field"><label>Contact email</label><input type="email" id="f-brand-email" placeholder="brian@orvannis.com"></div>
+        <div class="field"><label>Location</label><input type="text" id="f-brand-location" placeholder="Hooksett, New Hampshire"></div>
+      </div>
+
+      <div class="field-group">
+        <p class="group-label">Home — Hero</p>
+        <div class="field"><label>Eyebrow badge</label><input type="text" id="f-hero-eyebrow"></div>
+        <div class="field"><label>Headline (line 1)</label><input type="text" id="f-hero-headline"></div>
+        <div class="field"><label>Headline italic (line 2)</label><input type="text" id="f-hero-headline-em"></div>
+        <div class="field"><label>Body paragraph</label><textarea id="f-hero-body" rows="3"></textarea></div>
+        <div class="field"><label>Primary CTA label</label><input type="text" id="f-hero-cta-primary"></div>
+        <div class="field"><label>Secondary CTA label</label><input type="text" id="f-hero-cta-secondary"></div>
+        <div class="field"><label>Fine print note</label><input type="text" id="f-hero-note"></div>
+      </div>
+
+      <div class="field-group">
+        <p class="group-label">Modules Section</p>
+        <div class="field"><label>Section eyebrow</label><input type="text" id="f-modules-eyebrow"></div>
+        <div class="field"><label>Section title</label><input type="text" id="f-modules-title"></div>
+        <div class="field"><label>Section body</label><textarea id="f-modules-body" rows="2"></textarea></div>
+      </div>
+
+      <div class="field-group">
+        <p class="group-label">Module Cards</p>
+        <div class="field"><label>Flow — title</label><input type="text" id="f-card-0-title"></div>
+        <div class="field"><label>Flow — description</label><textarea id="f-card-0-body" rows="2"></textarea></div>
+        <div class="field"><label>Pay — title</label><input type="text" id="f-card-1-title"></div>
+        <div class="field"><label>Pay — description</label><textarea id="f-card-1-body" rows="2"></textarea></div>
+        <div class="field"><label>Connect — title</label><input type="text" id="f-card-2-title"></div>
+        <div class="field"><label>Connect — description</label><textarea id="f-card-2-body" rows="2"></textarea></div>
+        <div class="field"><label>Reach — title</label><input type="text" id="f-card-3-title"></div>
+        <div class="field"><label>Reach — description</label><textarea id="f-card-3-body" rows="2"></textarea></div>
+      </div>
+
+      <div class="field-group">
+        <p class="group-label">Footer CTA</p>
+        <div class="field"><label>CTA title</label><input type="text" id="f-cta-title"></div>
+        <div class="field"><label>CTA body</label><textarea id="f-cta-body" rows="2"></textarea></div>
+        <div class="field"><label>Primary button label</label><input type="text" id="f-cta-primary-label"></div>
+      </div>
+
+    </div>
+
+    <!-- COLORS TAB -->
+    <div class="panel" id="panel-colors">
+      <div class="field-group">
+        <p class="group-label">Copper Accent</p>
+        <div class="color-grid">
+          <div class="field"><label>Primary copper</label><input type="color" id="c-copper"></div>
+          <div class="field"><label>Bright copper</label><input type="color" id="c-copper-bright"></div>
+          <div class="field"><label>Muted copper</label><input type="color" id="c-copper-muted"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <p class="group-label">Light Mode Surfaces</p>
+        <div class="color-grid">
+          <div class="field"><label>Background</label><input type="color" id="c-bg-light"></div>
+          <div class="field"><label>Surface</label><input type="color" id="c-surface-light"></div>
+          <div class="field"><label>Primary text</label><input type="color" id="c-text-light"></div>
+          <div class="field"><label>Muted text</label><input type="color" id="c-text-muted-light"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <p class="group-label">Dark Mode Surfaces</p>
+        <div class="color-grid">
+          <div class="field"><label>Background</label><input type="color" id="c-bg-dark"></div>
+          <div class="field"><label>Primary text</label><input type="color" id="c-text-dark"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYOUT TAB -->
+    <div class="panel" id="panel-layout">
+      <div class="field-group">
+        <p class="group-label">Sections</p>
+        <div class="field field-toggle"><label>Marquee strip</label><label class="toggle-switch"><input type="checkbox" id="l-marquee"><span class="toggle-slider"></span></label></div>
+        <div class="field field-toggle"><label>Concept / story section</label><label class="toggle-switch"><input type="checkbox" id="l-concept"><span class="toggle-slider"></span></label></div>
+        <div class="field field-toggle"><label>Home bottom CTA</label><label class="toggle-switch"><input type="checkbox" id="l-cta"><span class="toggle-slider"></span></label></div>
+        <div class="field field-toggle"><label>Platform status badge</label><label class="toggle-switch"><input type="checkbox" id="l-status"><span class="toggle-slider"></span></label></div>
+      </div>
+      <div class="field-group">
+        <p class="group-label">Animations</p>
+        <div class="field field-toggle"><label>Rotating O ring</label><label class="toggle-switch"><input type="checkbox" id="l-o-rotate"><span class="toggle-slider"></span></label></div>
+        <div class="field field-toggle"><label>Nav logo spin</label><label class="toggle-switch"><input type="checkbox" id="l-logo-spin"><span class="toggle-slider"></span></label></div>
+        <div class="field field-toggle"><label>3D card tilt on hover</label><label class="toggle-switch"><input type="checkbox" id="l-3d-tilt"><span class="toggle-slider"></span></label></div>
+        <div class="field field-toggle"><label>Dark mode toggle</label><label class="toggle-switch"><input type="checkbox" id="l-dark-toggle"><span class="toggle-slider"></span></label></div>
+      </div>
+    </div>
+
+    <!-- EXPORT TAB -->
+    <div class="panel" id="panel-export">
+
+      <div class="how-to-box">
+        <h4>How to apply changes via Perplexity Computer</h4>
+        <ol>
+          <li>Make your edits in the panels above and click <strong>Apply Changes</strong></li>
+          <li>Click <strong>Copy config</strong> below to copy the updated config</li>
+          <li>In this Space, say: <strong>"Update site.config.js with this:"</strong> then paste</li>
+          <li>The AI will update the file and redeploy in seconds</li>
+        </ol>
+      </div>
+
+      <div class="export-box">
+        <h4>Or just describe what you want</h4>
+        <p>You can also simply tell Perplexity Computer what to change in plain English — no copying required:</p>
+        <div class="export-code">"Change the hero headline to 'Automate everything.'"\n"Update the copper color to a darker bronze"\n"Remove the marquee strip"\n"Change the CTA button text to 'Get Started'"</div>
+      </div>
+
+      <div class="export-box">
+        <h4>Export current config</h4>
+        <p>Copy the full site.config.js with all your current edits:</p>
+        <div class="export-code" id="export-code-preview">Click "Generate" to preview the config…</div>
+        <button class="copy-btn" onclick="generateAndCopyConfig()">Generate &amp; Copy config to clipboard</button>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ── PREVIEW PANE ── -->
+  <div class="preview-pane">
+    <div class="preview-toolbar">
+      <div class="preview-url" id="preview-url-bar">index.html</div>
+      <button class="page-btn active" onclick="loadPage('index.html', this)">Home</button>
+      <button class="page-btn" onclick="loadPage('platform.html', this)">Platform</button>
+      <button class="page-btn" onclick="loadPage('about.html', this)">About</button>
+      <button class="page-btn" onclick="loadPage('contact.html', this)">Contact</button>
+    </div>
+    <div class="preview-frame-wrap">
+      <iframe id="preview-iframe" src="index.html" title="Site preview"></iframe>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════
+   ORVANNIS EDITOR — client logic
+   ═══════════════════════════════════ */
+'use strict';
+
+const C = window.ORVANNIS;
+
+/* ── INIT: populate fields from config ── */
+function populateFields() {
+  const b = C.brand, h = C.home, col = C.colors, lay = C.layout;
+
+  // Brand
+  val('f-brand-name',     b.name);
+  val('f-brand-tagline',  b.tagline);
+  val('f-brand-email',    b.email);
+  val('f-brand-location', b.location);
+
+  // Hero
+  val('f-hero-eyebrow',       h.hero.eyebrow);
+  val('f-hero-headline',      h.hero.headline);
+  val('f-hero-headline-em',   h.hero.headlineEm);
+  val('f-hero-body',          h.hero.body);
+  val('f-hero-cta-primary',   h.hero.ctaPrimary.label);
+  val('f-hero-cta-secondary', h.hero.ctaSecondary.label);
+  val('f-hero-note',          h.hero.note);
+
+  // Modules
+  val('f-modules-eyebrow', h.modules.eyebrow);
+  val('f-modules-title',   h.modules.title);
+  val('f-modules-body',    h.modules.body);
+  h.modules.cards.forEach((c, i) => {
+    val(`f-card-${i}-title`, c.title);
+    val(`f-card-${i}-body`,  c.body);
+  });
+
+  // CTA
+  val('f-cta-title',        h.cta.title);
+  val('f-cta-body',         h.cta.body);
+  val('f-cta-primary-label',h.cta.ctaPrimary.label);
+
+  // Colors
+  val('c-copper',        col.copper);
+  val('c-copper-bright', col.copperBright);
+  val('c-copper-muted',  col.copperMuted);
+  val('c-bg-light',      col.bgLight);
+  val('c-surface-light', col.surfaceLight);
+  val('c-text-light',    col.textLight);
+  val('c-text-muted-light', col.textMutedLight);
+  val('c-bg-dark',       col.bgDark);
+  val('c-text-dark',     col.textDark);
+
+  // Layout
+  chk('l-marquee',     lay.showMarqueeStrip);
+  chk('l-concept',     lay.showConceptSection);
+  chk('l-cta',         lay.showHomeCta);
+  chk('l-status',      lay.showPlatformStatus);
+  chk('l-o-rotate',    lay.heroORotates);
+  chk('l-logo-spin',   lay.navLogoSpins);
+  chk('l-3d-tilt',     lay.cards3dTilt);
+  chk('l-dark-toggle', lay.darkModeToggle);
+}
+
+function val(id, v) { const el = document.getElementById(id); if (el && v !== undefined) el.value = v; }
+function chk(id, v) { const el = document.getElementById(id); if (el) el.checked = !!v; }
+function getVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+function getChk(id) { const el = document.getElementById(id); return el ? el.checked : false; }
+
+/* ── READ FIELDS INTO CONFIG ── */
+function readFields() {
+  C.brand.name     = getVal('f-brand-name');
+  C.brand.tagline  = getVal('f-brand-tagline');
+  C.brand.email    = getVal('f-brand-email');
+  C.brand.location = getVal('f-brand-location');
+
+  C.home.hero.eyebrow         = getVal('f-hero-eyebrow');
+  C.home.hero.headline        = getVal('f-hero-headline');
+  C.home.hero.headlineEm      = getVal('f-hero-headline-em');
+  C.home.hero.body            = getVal('f-hero-body');
+  C.home.hero.ctaPrimary.label  = getVal('f-hero-cta-primary');
+  C.home.hero.ctaSecondary.label= getVal('f-hero-cta-secondary');
+  C.home.hero.note            = getVal('f-hero-note');
+
+  C.home.modules.eyebrow = getVal('f-modules-eyebrow');
+  C.home.modules.title   = getVal('f-modules-title');
+  C.home.modules.body    = getVal('f-modules-body');
+  [0,1,2,3].forEach(i => {
+    if (C.home.modules.cards[i]) {
+      C.home.modules.cards[i].title = getVal(`f-card-${i}-title`);
+      C.home.modules.cards[i].body  = getVal(`f-card-${i}-body`);
+    }
+  });
+
+  C.home.cta.title            = getVal('f-cta-title');
+  C.home.cta.body             = getVal('f-cta-body');
+  C.home.cta.ctaPrimary.label = getVal('f-cta-primary-label');
+
+  C.colors.copper        = getVal('c-copper');
+  C.colors.copperBright  = getVal('c-copper-bright');
+  C.colors.copperMuted   = getVal('c-copper-muted');
+  C.colors.bgLight       = getVal('c-bg-light');
+  C.colors.surfaceLight  = getVal('c-surface-light');
+  C.colors.textLight     = getVal('c-text-light');
+  C.colors.textMutedLight= getVal('c-text-muted-light');
+  C.colors.bgDark        = getVal('c-bg-dark');
+  C.colors.textDark      = getVal('c-text-dark');
+
+  C.layout.showMarqueeStrip   = getChk('l-marquee');
+  C.layout.showConceptSection = getChk('l-concept');
+  C.layout.showHomeCta        = getChk('l-cta');
+  C.layout.showPlatformStatus = getChk('l-status');
+  C.layout.heroORotates       = getChk('l-o-rotate');
+  C.layout.navLogoSpins       = getChk('l-logo-spin');
+  C.layout.cards3dTilt        = getChk('l-3d-tilt');
+  C.layout.darkModeToggle     = getChk('l-dark-toggle');
+}
+
+/* ── APPLY: inject updated config into iframe then reload ── */
+function applyAndSave() {
+  readFields();
+  markUnsaved();
+  refreshPreview();
+  setTimeout(() => markSaved(), 600);
+}
+
+function refreshPreview() {
+  const iframe = document.getElementById('preview-iframe');
+  const src = iframe.src;
+  // Inject fresh config into iframe contentWindow
+  try {
+    const iwin = iframe.contentWindow;
+    iwin.ORVANNIS = JSON.parse(JSON.stringify(C));
+    // Trigger re-render if render.js is already loaded
+    if (iwin.document.readyState === 'complete') {
+      iwin.location.reload();
+    }
+  } catch(e) {
+    iframe.src = iframe.src;
+  }
+}
+
+/* ── PAGE NAVIGATION ── */
+function loadPage(href, btn) {
+  document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('preview-url-bar').textContent = href;
+  document.getElementById('preview-iframe').src = href;
+}
+
+/* ── TABS ── */
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${name}`));
+}
+
+/* ── SAVE STATUS ── */
+function markUnsaved() {
+  const el = document.getElementById('save-status');
+  el.textContent = 'Unsaved changes'; el.className = 'save-status unsaved';
+}
+function markSaved() {
+  const el = document.getElementById('save-status');
+  el.textContent = 'Applied to preview'; el.className = 'save-status saved';
+}
+
+/* ── RESET ── */
+function resetToDefaults() {
+  if (!confirm('Reset all fields to the current site.config.js values?')) return;
+  populateFields();
+  markSaved();
+}
+
+/* ── GENERATE CONFIG STRING ── */
+function generateAndCopyConfig() {
+  readFields();
+  const str = buildConfigString();
+  document.getElementById('export-code-preview').textContent = str.substring(0, 600) + '\n…(truncated for preview)';
+  navigator.clipboard.writeText(str).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✓ Copied to clipboard!';
+    setTimeout(() => { btn.textContent = 'Generate & Copy config to clipboard'; }, 2500);
+  }).catch(() => {
+    alert('Copy failed — your browser may block clipboard access in iframes. Use the Export tab content and paste manually.');
+  });
+}
+
+function buildConfigString() {
+  const j = (v) => JSON.stringify(v, null, 2);
+  const co = C.colors;
+  return `/* Orvannis site.config.js — exported ${new Date().toLocaleString()} */
+window.ORVANNIS = ${j(C)};`;
+}
+
+/* ── LIVE COLOR PREVIEW: update CSS vars in real-time ── */
+function watchColorInputs() {
+  const colorMap = {
+    'c-copper':       '--copper',
+    'c-copper-bright':'--copper-bright',
+    'c-copper-muted': '--copper-muted',
+    'c-bg-light':     '--color-bg',
+    'c-surface-light':'--color-surface',
+    'c-text-light':   '--color-text',
+    'c-text-muted-light':'--color-text-muted',
+  };
+  Object.entries(colorMap).forEach(([id, cssVar]) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('input', () => {
+      try {
+        const iframe = document.getElementById('preview-iframe');
+        iframe.contentDocument?.documentElement?.style?.setProperty(cssVar, input.value);
+      } catch(e) {}
+    });
+  });
+}
+
+/* ── DIRTY TRACKING ── */
+function watchAllInputs() {
+  document.querySelectorAll('input, textarea').forEach(el => {
+    el.addEventListener('input', markUnsaved);
+    el.addEventListener('change', markUnsaved);
+  });
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  populateFields();
+  watchColorInputs();
+  watchAllInputs();
+});
+</script>
+</body>
+</html>
