@@ -33,6 +33,34 @@
 }
 
 /* =====================
+   CONSTRUCTION NOTICE
+   Temporary banner — remove the .construction-notice element from each
+   page once the full site (all platform links, etc.) is ready to go live.
+   ===================== */
+.construction-notice {
+  width: 100%;
+  background: var(--color-primary);
+  color: #FFF8EF;
+  text-align: center;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  padding: 0.7rem 1.25rem;
+  position: relative;
+  z-index: 20;
+}
+.construction-notice p { margin: 0; }
+.construction-notice a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.construction-notice a:hover { opacity: 0.85; }
+@media (max-width: 600px) {
+  .construction-notice { font-size: var(--text-xs); padding: 0.6rem 1rem; }
+}
+
+/* =====================
    SITE-TOP BANNER
    Full lockup (mark + wordmark + tagline) shown as a compact strip above
    the nav. Per brand direction: the DARK-background banner image is shown
