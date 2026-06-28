@@ -62,37 +62,30 @@
 
 /* =====================
    SITE-TOP BANNER
-   Full lockup (mark + wordmark + tagline) shown as a compact strip above
-   the nav. The banner image's own background now matches the active theme
-   (cream image in light mode, black image in dark mode), so the container
-   background just follows --color-bg to stay seamless behind it.
+   Full lockup (mark + wordmark + tagline) shown full-width above the nav.
+   The banner image's own background matches the active theme (cream image
+   in light mode, black image in dark mode), so the container background
+   just follows --color-bg to stay seamless behind it.
    ===================== */
 .site-top-banner {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-block: 0.75rem;
+  display: block;
   background: var(--color-bg);
   position: relative;
   z-index: 10;
+  overflow: hidden;
 }
 .banner-img {
   display: none;
-  height: 58px;
-  width: auto;
-  max-width: 92%;
-  object-fit: contain;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  object-fit: cover;
 }
 [data-theme="dark"]  .banner-img--for-light { display: none; }
 [data-theme="dark"]  .banner-img--for-dark  { display: block; }
 html:not([data-theme="dark"]) .banner-img--for-light { display: block; }
 html:not([data-theme="dark"]) .banner-img--for-dark  { display: none; }
-
-@media (max-width: 600px) {
-  .site-top-banner { padding-block: 0.5rem; }
-  .banner-img { height: 40px; }
-}
 
 /* =====================
    NAVIGATION
