@@ -60,7 +60,7 @@ window.ORVANNIS = {
     { label: 'About',     href: 'about.html' },
     { label: 'Contact',   href: 'contact.html' },
   ],
-  navCta: { label: 'Book a Consultation', href: 'contact.html' },
+  navCta: { label: 'Book a Discovery Call', href: 'contact.html' },
 
   /* ─────────────────────────────────────────
      HOME PAGE
