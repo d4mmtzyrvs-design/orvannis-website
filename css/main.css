@@ -79,7 +79,12 @@
   display: none;
   width: 100%;
   max-width: none;
-  object-fit: cover;
+  /* contain (not cover) — the banner's own background already matches the
+     page background per theme, so there's no visible letterboxing, but it
+     guarantees the whole graphic (icon, wordmark, AND tagline) is always
+     fully visible instead of cover cropping the top/bottom off to fill a
+     short container. */
+  object-fit: contain;
   object-position: center;
 }
 /* Each variant's height is set independently (rather than width:100%/height:auto)
@@ -350,6 +355,77 @@ html:not([data-theme="dark"]) .banner-img--for-dark  { display: none; }
   color: var(--color-text-muted);
   line-height: 1.65;
   max-width: none;
+}
+
+/* ── "What Makes Us Different" cards (About page) ──
+   These had no rules at all and were falling back to the browser's default
+   bold serif heading font, clashing badly with the rest of the page's type.
+   ────────────────────────────────────────────────────────────────────── */
+.difference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-8);
+  margin-top: var(--sp-10);
+}
+@media (max-width: 760px) {
+  .difference-grid { grid-template-columns: 1fr; }
+}
+.difference-card {
+  padding: var(--sp-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  background: var(--color-surface);
+}
+.difference-icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-full);
+  background: var(--color-primary-pale);
+  color: var(--color-primary);
+  margin-bottom: var(--sp-5);
+}
+.difference-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--color-primary);
+  margin: 0 0 var(--sp-3);
+  line-height: 1.2;
+}
+.difference-body {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  margin: 0 0 var(--sp-5);
+}
+.difference-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.difference-list li {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  padding-left: var(--sp-5);
+  position: relative;
+}
+.difference-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
 }
 
 /* Copper top-border accent that appears on hover */
