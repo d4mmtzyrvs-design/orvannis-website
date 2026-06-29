@@ -1,11 +1,7 @@
 """
 Orvannis Backend — FastAPI Contact Form Handler
 Receives form submissions, stores to SQLite, sends branded auto-reply
-and internal notification via Microsoft Graph API (brian@orvannis.com).
-
-Auth model: OAuth2 Client Credentials (app-only) — Microsoft 365 tenants only.
-No user sign-in required. A client secret is used to obtain a short-lived
-access token on each email send.
+and internal notification via Resend (brian@orvannis.com).
 
 Includes /admin/report endpoint for weekly automated monitoring.
 """
@@ -32,9 +28,7 @@ logger = logging.getLogger("orvannis")
 # ---------------------------------------------------------------------------
 # Config — pulled from environment variables
 # ---------------------------------------------------------------------------
-TENANT_ID      = os.environ.get("AZURE_TENANT_ID", "")
-CLIENT_ID      = os.environ.get("AZURE_CLIENT_ID", "")
-CLIENT_SECRET  = os.environ.get("AZURE_CLIENT_SECRET", "")
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 SENDER_EMAIL   = os.environ.get("SENDER_EMAIL", "brian@orvannis.com")
 NOTIFY_EMAILS  = os.environ.get("NOTIFY_EMAILS", "brian@orvannis.com,boc_173@yahoo.com").split(",")
 DB_PATH        = os.environ.get("DB_PATH", "/data/orvannis.db")
@@ -42,8 +36,7 @@ DB_PATH        = os.environ.get("DB_PATH", "/data/orvannis.db")
 # Set ADMIN_TOKEN in your deployment env vars to any long random string.
 ADMIN_TOKEN    = os.environ.get("ADMIN_TOKEN", "")
 
-GRAPH_TOKEN_URL = f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token"
-GRAPH_SEND_URL  = f"https://graph.microsoft.com/v1.0/users/{SENDER_EMAIL}/sendMail"
+RESEND_SEND_URL = "https://api.resend.com/emails"
 
 
 # ---------------------------------------------------------------------------
@@ -137,23 +130,8 @@ def require_admin(credentials: HTTPAuthorizationCredentials = Depends(bearer_sch
 
 
 # ---------------------------------------------------------------------------
-# Microsoft Graph — client credentials (app-only) flow
+# Resend email sending
 # ---------------------------------------------------------------------------
-async def get_graph_token() -> str:
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            GRAPH_TOKEN_URL,
-            data={
-                "grant_type":    "client_credentials",
-                "client_id":     CLIENT_ID,
-                "client_secret": CLIENT_SECRET,
-                "scope":         "https://graph.microsoft.com/.default",
-            },
-        )
-        if resp.status_code != 200:
-            logger.error("Token request failed %s: %s", resp.status_code, resp.text)
-            resp.raise_for_status()
-        return resp.json()["access_token"]
 
 
 def build_auto_reply_html(name: str) -> str:
@@ -400,26 +378,24 @@ def build_weekly_report_html(report: dict) -> str:
 </html>"""
 
 
-async def send_email_via_graph(token: str, to_address: str, subject: str, html_body: str):
+async def send_email_via_resend(to_address: str, subject: str, html_body: str):
     payload = {
-        "message": {
-            "subject": subject,
-            "body": {"contentType": "HTML", "content": html_body},
-            "toRecipients": [{"emailAddress": {"address": to_address}}],
-        },
-        "saveToSentItems": "true",
+        "from": f"Brian O'Connor <{SENDER_EMAIL}>",
+        "to": [to_address],
+        "subject": subject,
+        "html": html_body,
     }
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            GRAPH_SEND_URL,
+            RESEND_SEND_URL,
             json=payload,
             headers={
-                "Authorization": f"Bearer {token}",
+                "Authorization": f"Bearer {RESEND_API_KEY}",
                 "Content-Type":  "application/json",
             },
         )
-        if resp.status_code not in (200, 202):
-            logger.error("Graph send error %s: %s", resp.status_code, resp.text)
+        if resp.status_code not in (200, 201):
+            logger.error("Resend error %s: %s", resp.status_code, resp.text)
             resp.raise_for_status()
 
 
@@ -475,36 +451,19 @@ async def contact(form: ContactForm):
     finally:
         conn.close()
 
-    # 2. Send emails via Microsoft Graph
-    if TENANT_ID and CLIENT_ID and CLIENT_SECRET:
+    # 2. Send emails via Resend
+    if RESEND_API_KEY:
         email_error = False
-        try:
-            token = await get_graph_token()
-        except Exception as exc:
-            logger.error("Token fetch failed: %s", exc)
-            conn = get_db()
-            log_email_attempt(conn, submission_id, form.email, "auto_reply",
-                              "failed", error_detail=f"Token fetch error: {exc}")
-            for ne in NOTIFY_EMAILS:
-                if ne.strip():
-                    log_email_attempt(conn, submission_id, ne.strip(), "notification",
-                                      "failed", error_detail=f"Token fetch error: {exc}")
-            conn.close()
-            return {
-                "success": True,
-                "message": "Your message was received. "
-                           "Email notification encountered an issue — Brian will follow up manually.",
-            }
 
         # Auto-reply
         conn = get_db()
         try:
-            await send_email_via_graph(
-                token, form.email,
+            await send_email_via_resend(
+                form.email,
                 "Thanks for reaching out — Orvannis",
                 build_auto_reply_html(form.name),
             )
-            log_email_attempt(conn, submission_id, form.email, "auto_reply", "sent", http_status=202)
+            log_email_attempt(conn, submission_id, form.email, "auto_reply", "sent", http_status=200)
         except httpx.HTTPStatusError as exc:
             email_error = True
             log_email_attempt(conn, submission_id, form.email, "auto_reply", "failed",
@@ -526,12 +485,12 @@ async def contact(form: ContactForm):
                 continue
             conn = get_db()
             try:
-                await send_email_via_graph(
-                    token, notify_email,
+                await send_email_via_resend(
+                    notify_email,
                     f"New consultation request from {form.name}",
                     build_notification_html(form, submitted_at),
                 )
-                log_email_attempt(conn, submission_id, notify_email, "notification", "sent", http_status=202)
+                log_email_attempt(conn, submission_id, notify_email, "notification", "sent", http_status=200)
             except httpx.HTTPStatusError as exc:
                 email_error = True
                 log_email_attempt(conn, submission_id, notify_email, "notification", "failed",
@@ -554,7 +513,7 @@ async def contact(form: ContactForm):
 
         logger.info("All emails sent for submission #%d", submission_id)
     else:
-        logger.warning("Graph credentials not configured — skipping email send")
+        logger.warning("RESEND_API_KEY not configured — skipping email send")
 
     return {
         "success": True,
