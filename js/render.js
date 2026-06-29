@@ -111,7 +111,7 @@
     if (!$('[data-page="home"]')) return;
     const h = C.home;
     if (!h) return;
-    const { hero, modules, concept, cta, layout } = { ...h, layout: C.layout };
+    const { hero, modules, concept, cta, layout, founderStrip, helpWith, currentServices, whoWeHelp, howWeWork } = { ...h, layout: C.layout };
 
     // Hero
     set('[data-hero-eyebrow]', hero?.eyebrow);
@@ -152,6 +152,51 @@
       if (body)  body.textContent = m.body;
       if (link)  { link.href = m.href || '#'; }
     });
+
+    // Founder strip (near the top of the homepage, per brand direction)
+    set('[data-founder-eyebrow]', founderStrip?.eyebrow);
+    set('[data-founder-body]', founderStrip?.body);
+    const founderCta = $('[data-founder-cta]');
+    if (founderCta && founderStrip?.cta) {
+      founderCta.textContent = founderStrip.cta.label + ' →';
+      founderCta.href = founderStrip.cta.href;
+    }
+
+    // "What We Actually Help With"
+    set('[data-helpwith-eyebrow]', helpWith?.eyebrow);
+    set('[data-helpwith-title]', helpWith?.title);
+    const helpWithList = $('[data-helpwith-items]');
+    if (helpWithList && helpWith?.items) {
+      helpWithList.innerHTML = helpWith.items.map(i => `<li>${i}</li>`).join('');
+    }
+
+    // "Built for Year 1" / current services
+    set('[data-currentservices-eyebrow]', currentServices?.eyebrow);
+    set('[data-currentservices-title]', currentServices?.title);
+    set('[data-currentservices-body]', currentServices?.body);
+    set('[data-currentservices-statement]', currentServices?.statement);
+    const currentServicesList = $('[data-currentservices-items]');
+    if (currentServicesList && currentServices?.items) {
+      currentServicesList.innerHTML = currentServices.items.map(i => `<li>${i}</li>`).join('');
+    }
+
+    // "Who We Help"
+    set('[data-whowehelp-eyebrow]', whoWeHelp?.eyebrow);
+    set('[data-whowehelp-title]', whoWeHelp?.title);
+    const whoWeHelpList = $('[data-whowehelp-items]');
+    if (whoWeHelpList && whoWeHelp?.items) {
+      whoWeHelpList.innerHTML = whoWeHelp.items.map(i => `<li>${i}</li>`).join('');
+    }
+
+    // "How We Work"
+    set('[data-howwework-eyebrow]', howWeWork?.eyebrow);
+    set('[data-howwework-title]', howWeWork?.title);
+    const howWeWorkList = $('[data-howwework-steps]');
+    if (howWeWorkList && howWeWork?.steps) {
+      howWeWorkList.innerHTML = howWeWork.steps.map(s =>
+        `<li><span class="how-step-num">${s.num}</span><span class="how-step-title">${s.title}</span><span class="how-step-body">${s.body}</span></li>`
+      ).join('');
+    }
 
     // Concept section
     if (C.layout?.showConceptSection === false) {
@@ -213,6 +258,13 @@
     if (titleEl) titleEl.innerHTML = (p.hero?.title || '').replace('\n', '<br>');
     set('[data-hero-subtitle]', p.hero?.subtitle);
     set('[data-status-badge]', p.hero?.statusBadge);
+
+    // What We Actually Help With
+    set('[data-helpwith-eyebrow]', p.helpWith?.eyebrow);
+    const helpWithList = $('[data-helpwith-items]');
+    if (helpWithList && p.helpWith?.items) {
+      helpWithList.innerHTML = p.helpWith.items.map(i => `<li>${i}</li>`).join('');
+    }
 
     // Modules
     p.modules?.forEach((mod, i) => {

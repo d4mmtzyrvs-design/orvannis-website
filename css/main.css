@@ -378,6 +378,114 @@ html:not([data-theme="dark"]) .banner-img--for-dark  { display: none; }
 .section--tight {
   padding-block: clamp(var(--sp-8), 5vw, var(--sp-20));
 }
+.section--alt {
+  background: var(--color-surface);
+  border-block: 1px solid var(--color-divider);
+}
+
+/* ── FOUNDER STRIP (homepage, near the top) ── */
+.founder-strip-inner {
+  text-align: center;
+  max-width: 56ch;
+  margin-inline: auto;
+}
+.founder-strip-body {
+  font-size: var(--text-md);
+  color: var(--color-text);
+  line-height: 1.7;
+  margin-top: var(--sp-3);
+}
+.founder-strip-link {
+  display: inline-block;
+  margin-top: var(--sp-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.founder-strip-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── SIMPLE BULLET LISTS (What We Help With / Built for Year 1 / Who We Help) ── */
+.simple-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  margin-top: var(--sp-8);
+}
+.simple-list--grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-4) var(--sp-8);
+}
+@media (max-width: 700px) {
+  .simple-list--grid { grid-template-columns: 1fr; }
+}
+.simple-list li {
+  position: relative;
+  padding-left: var(--sp-6);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+.simple-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+/* ── "We don't start with custom software" statement ── */
+.no-custom-software {
+  margin-top: var(--sp-10);
+  padding: var(--sp-6) var(--sp-8);
+  border-left: 3px solid var(--color-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-style: italic;
+  color: var(--color-heading);
+  line-height: 1.5;
+  max-width: 56ch;
+}
+
+/* ── HOW WE WORK steps ── */
+.how-we-work-steps {
+  list-style: none;
+  margin: var(--sp-10) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-8);
+}
+@media (max-width: 900px) {
+  .how-we-work-steps { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .how-we-work-steps { grid-template-columns: 1fr; }
+}
+.how-we-work-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.how-step-num {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  color: var(--color-primary-pale);
+  font-weight: 600;
+}
+.how-step-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-heading);
+}
+.how-step-body {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
 
 .eyebrow {
   font-size: var(--text-xs);
