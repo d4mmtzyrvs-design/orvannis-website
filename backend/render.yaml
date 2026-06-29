@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: orvannis-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    disk:
+      name: orvannis-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: AZURE_TENANT_ID
+        sync: false
+      - key: AZURE_CLIENT_ID
+        sync: false
+      - key: AZURE_CLIENT_SECRET
+        sync: false
+      - key: SENDER_EMAIL
+        value: brian@orvannis.com
+      - key: NOTIFY_EMAILS
+        value: brian@orvannis.com,boc_173@yahoo.com
+      - key: DB_PATH
+        value: /data/orvannis.db
+      - key: ADMIN_TOKEN
+        sync: false
