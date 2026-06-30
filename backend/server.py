@@ -57,6 +57,7 @@ def init_db():
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             name         TEXT NOT NULL,
             email        TEXT NOT NULL,
+            phone        TEXT,
             company      TEXT,
             message      TEXT NOT NULL,
             submitted_at TEXT NOT NULL
@@ -112,6 +113,7 @@ app.add_middleware(
 class ContactForm(BaseModel):
     name: str
     email: EmailStr
+    phone: str | None = None
     company: str | None = None
     message: str
 
@@ -187,6 +189,11 @@ def build_auto_reply_html(name: str) -> str:
 
 
 def build_notification_html(form: ContactForm, submitted_at: str) -> str:
+    phone_row = (
+        f"<tr><td style='padding:4px 0;color:#666;width:80px;'>Phone</td>"
+        f"<td style='padding:4px 0 4px 16px;'>{form.phone}</td></tr>"
+        if form.phone else ""
+    )
     company_row = (
         f"<tr><td style='padding:4px 0;color:#666;width:80px;'>Company</td>"
         f"<td style='padding:4px 0 4px 16px;'>{form.company}</td></tr>"
@@ -199,7 +206,7 @@ def build_notification_html(form: ContactForm, submitted_at: str) -> str:
   <div style="max-width:560px;margin:auto;background:#fff;border-radius:4px;
               padding:32px;border-left:4px solid #B87333;">
     <h2 style="margin:0 0 16px;color:#1e2a35;">
-      New Consultation Request — Orvannis
+      New Discovery Call Request — Orvannis
     </h2>
     <table cellpadding="0" cellspacing="0" style="font-size:15px;color:#2c2c2c;">
       <tr><td style="padding:4px 0;color:#666;width:80px;">Name</td>
@@ -208,6 +215,7 @@ def build_notification_html(form: ContactForm, submitted_at: str) -> str:
           <td style="padding:4px 0 4px 16px;">
             <a href="mailto:{form.email}" style="color:#B87333;">{form.email}</a>
           </td></tr>
+      {phone_row}
       {company_row}
       <tr><td style="padding:12px 0 4px;color:#666;vertical-align:top;">Message</td>
           <td style="padding:12px 0 4px 16px;">{form.message}</td></tr>
@@ -441,9 +449,9 @@ async def contact(form: ContactForm):
     conn = get_db()
     try:
         cursor = conn.execute(
-            "INSERT INTO submissions (name, email, company, message, submitted_at) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (form.name, form.email, form.company, form.message, submitted_at),
+            "INSERT INTO submissions (name, email, phone, company, message, submitted_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (form.name, form.email, form.phone, form.company, form.message, submitted_at),
         )
         submission_id = cursor.lastrowid
         conn.commit()

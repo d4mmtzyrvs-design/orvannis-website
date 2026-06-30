@@ -193,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn     = form.querySelector('[type="submit"]');
     const name    = form.querySelector('#name')?.value.trim()    || '';
     const email   = form.querySelector('#email')?.value.trim()   || '';
+    const phone   = form.querySelector('#phone')?.value.trim()   || '';
     const company = form.querySelector('#company')?.value.trim() || '';
     const size    = form.querySelector('#size')?.value            || '';
     const message = form.querySelector('#message')?.value.trim() || '';
@@ -219,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             // size is excluded — backend ContactForm doesn't accept it
-            body: JSON.stringify({ name, email, company: company || undefined, message }),
+            body: JSON.stringify({ name, email, phone: phone || undefined, company: company || undefined, message }),
           });
           if (resp.ok) { sent = true; }
         } catch (_) { /* backend unreachable — fall through to mailto */ }
@@ -230,9 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
       } else {
         // ── Mailto fallback: include team size here ────────────────────
-        const subject = encodeURIComponent(`Orvannis Consultation Request — ${company || name}`);
+        const subject = encodeURIComponent(`Orvannis Discovery Call Request — ${company || name}`);
         const body = encodeURIComponent(
-          `Name: ${name}\nEmail: ${email}\nCompany: ${company || '—'}\nTeam size: ${size || '—'}\n\n${message}`
+          `Name: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nCompany: ${company || '—'}\nTeam size: ${size || '—'}\n\n${message}`
         );
         window.location.href = `mailto:brian@orvannis.com?subject=${subject}&body=${body}`;
         setStatus(form, 'Your email client is opening with your request pre-filled.', 'success');
@@ -245,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
       );
     } finally {
       btn.disabled = false;
-      btnLabel.textContent = 'Book a Consultation';
+      btnLabel.textContent = 'Book a Discovery Call';
     }
   });
 });
