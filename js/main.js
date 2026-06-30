@@ -197,6 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const company = form.querySelector('#company')?.value.trim() || '';
     const size    = form.querySelector('#size')?.value            || '';
     const message = form.querySelector('#message')?.value.trim() || '';
+    const industry          = form.querySelector('#industry')?.value || '';
+    const leadSource        = form.querySelector('#lead_source')?.value || '';
+    const bestTime           = form.querySelector('#best_time')?.value || '';
+    const preferredContact  = form.querySelector('input[name="preferred_contact"]:checked')?.value || 'Email';
 
     if (!name || !email || !message) {
       setStatus(form, 'Please fill in your name, email, and message.', 'error');
@@ -220,7 +224,16 @@ document.addEventListener('DOMContentLoaded', () => {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             // size is excluded — backend ContactForm doesn't accept it
-            body: JSON.stringify({ name, email, phone: phone || undefined, company: company || undefined, message }),
+            body: JSON.stringify({
+              name, email,
+              phone: phone || undefined,
+              company: company || undefined,
+              message,
+              industry: industry || undefined,
+              lead_source: leadSource || undefined,
+              best_time: bestTime || undefined,
+              preferred_contact: preferredContact,
+            }),
           });
           if (resp.ok) { sent = true; }
         } catch (_) { /* backend unreachable — fall through to mailto */ }
@@ -233,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Mailto fallback: include team size here ────────────────────
         const subject = encodeURIComponent(`Orvannis Discovery Call Request — ${company || name}`);
         const body = encodeURIComponent(
-          `Name: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nCompany: ${company || '—'}\nTeam size: ${size || '—'}\n\n${message}`
+          `Name: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nCompany: ${company || '—'}\nTeam size: ${size || '—'}\nIndustry: ${industry || '—'}\nPreferred contact: ${preferredContact}\nBest time: ${bestTime || '—'}\nHeard about us via: ${leadSource || '—'}\n\n${message}`
         );
         window.location.href = `mailto:brian@orvannis.com?subject=${subject}&body=${body}`;
         setStatus(form, 'Your email client is opening with your request pre-filled.', 'success');

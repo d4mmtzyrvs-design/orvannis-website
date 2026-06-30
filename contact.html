@@ -133,6 +133,38 @@
             </select>
           </div>
           <div class="form-group">
+            <label class="form-label" for="industry">Business industry</label>
+            <select class="form-input form-select" id="industry" name="industry">
+              <option value="" disabled selected>Select…</option>
+              <option>Retail</option><option>Healthcare</option><option>Finance</option><option>Real Estate</option><option>Professional Services</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lead_source">How did you hear about us?</label>
+            <select class="form-input form-select" id="lead_source" name="lead_source">
+              <option value="" disabled selected>Select…</option>
+              <option>LinkedIn</option><option>Google Search</option><option>Referral</option><option>Social Media</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="best_time">Best time to reach you</label>
+            <select class="form-input form-select" id="best_time" name="best_time">
+              <option value="" disabled selected>Select…</option>
+              <option value="Morning 8-11AM">Morning — 8–11 AM</option><option value="Afternoon 12-4PM">Afternoon — 12–4 PM</option><option value="Evening 4-7PM">Evening — 4–7 PM</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preferred contact method</label>
+            <div style="display:flex;gap:var(--sp-6);margin-top:var(--sp-2)">
+              <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);cursor:pointer">
+                <input type="radio" name="preferred_contact" value="Email" checked style="accent-color:var(--color-primary)"> Email
+              </label>
+              <label style="display:flex;align-items:center;gap:var(--sp-2);font-size:var(--text-sm);cursor:pointer">
+                <input type="radio" name="preferred_contact" value="Phone" style="accent-color:var(--color-primary)"> Phone
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
             <label class="form-label" for="message">Biggest operational pain point? <span style="color:var(--color-primary)">*</span></label>
             <textarea class="form-input form-textarea" id="message" name="message" required rows="5" data-msg-placeholder placeholder="E.g. I run a 10-person service business and spend half my week on things that should be automated — but I also need help tightening up our sales process..."></textarea>
           </div>

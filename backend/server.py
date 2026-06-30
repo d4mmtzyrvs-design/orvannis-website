@@ -60,6 +60,10 @@ def init_db():
             phone        TEXT,
             company      TEXT,
             message      TEXT NOT NULL,
+            industry           TEXT,
+            lead_source        TEXT,
+            best_time          TEXT,
+            preferred_contact  TEXT,
             submitted_at TEXT NOT NULL
         )
     """)
@@ -116,6 +120,10 @@ class ContactForm(BaseModel):
     phone: str | None = None
     company: str | None = None
     message: str
+    industry: str | None = None
+    lead_source: str | None = None
+    best_time: str | None = None
+    preferred_contact: str | None = "Email"
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +207,25 @@ def build_notification_html(form: ContactForm, submitted_at: str) -> str:
         f"<td style='padding:4px 0 4px 16px;'>{form.company}</td></tr>"
         if form.company else ""
     )
+    extra_row = (
+        f"<tr><td style='padding:4px 0;color:#666;width:80px;'>Industry</td>"
+        f"<td style='padding:4px 0 4px 16px;'>{form.industry}</td></tr>"
+        if form.industry else ""
+    )
+    extra_row += (
+        f"<tr><td style='padding:4px 0;color:#666;width:80px;'>Best time</td>"
+        f"<td style='padding:4px 0 4px 16px;'>{form.best_time}</td></tr>"
+        if form.best_time else ""
+    )
+    extra_row += (
+        f"<tr><td style='padding:4px 0;color:#666;width:80px;'>Heard via</td>"
+        f"<td style='padding:4px 0 4px 16px;'>{form.lead_source}</td></tr>"
+        if form.lead_source else ""
+    )
+    extra_row += (
+        f"<tr><td style='padding:4px 0;color:#666;width:80px;'>Prefers</td>"
+        f"<td style='padding:4px 0 4px 16px;'>{form.preferred_contact}</td></tr>"
+    )
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"></head>
@@ -217,6 +244,7 @@ def build_notification_html(form: ContactForm, submitted_at: str) -> str:
           </td></tr>
       {phone_row}
       {company_row}
+      {extra_row}
       <tr><td style="padding:12px 0 4px;color:#666;vertical-align:top;">Message</td>
           <td style="padding:12px 0 4px 16px;">{form.message}</td></tr>
       <tr><td style="padding:4px 0;color:#666;">Received</td>
@@ -449,9 +477,11 @@ async def contact(form: ContactForm):
     conn = get_db()
     try:
         cursor = conn.execute(
-            "INSERT INTO submissions (name, email, phone, company, message, submitted_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (form.name, form.email, form.phone, form.company, form.message, submitted_at),
+            "INSERT INTO submissions "
+            "(name, email, phone, company, message, industry, lead_source, best_time, preferred_contact, submitted_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (form.name, form.email, form.phone, form.company, form.message,
+             form.industry, form.lead_source, form.best_time, form.preferred_contact, submitted_at),
         )
         submission_id = cursor.lastrowid
         conn.commit()
