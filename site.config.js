@@ -16,8 +16,7 @@ window.ORVANNIS = {
      once you have deployed server.py.
      Leave blank to use the mailto fallback.
   ───────────────────────────────────────── */
-  backendUrl: '',
-  // backendUrl: 'https://orvannis-backend.up.railway.app',
+  backendUrl: 'https://orvannis-website-production.up.railway.app',
 
   /* ─────────────────────────────────────────
      BRAND
