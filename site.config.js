@@ -163,7 +163,7 @@ window.ORVANNIS = {
         'Founder-led businesses',
         'Professional service firms',
         'Local service businesses',
-        'Financial and advisory businesses',
+        'Advisory businesses',
         'Growing teams using disconnected tools',
         'Businesses with manual admin bottlenecks',
       ],
