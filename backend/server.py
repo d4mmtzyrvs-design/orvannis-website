@@ -28,15 +28,16 @@ logger = logging.getLogger("orvannis")
 # ---------------------------------------------------------------------------
 # Config — pulled from environment variables
 # ---------------------------------------------------------------------------
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-SENDER_EMAIL   = os.environ.get("SENDER_EMAIL", "brian@orvannis.com")
-NOTIFY_EMAILS  = os.environ.get("NOTIFY_EMAILS", "brian@orvannis.com,boc_173@yahoo.com").split(",")
-DB_PATH        = os.environ.get("DB_PATH", "/data/orvannis.db")
-# A static secret token to protect the /admin/report endpoint.
-# Set ADMIN_TOKEN in your deployment env vars to any long random string.
-ADMIN_TOKEN    = os.environ.get("ADMIN_TOKEN", "")
+RESEND_API_KEY    = os.environ.get("RESEND_API_KEY", "")
+SENDER_EMAIL      = os.environ.get("SENDER_EMAIL", "brian@orvannis.com")
+NOTIFY_EMAILS     = os.environ.get("NOTIFY_EMAILS", "brian@orvannis.com,boc_173@yahoo.com").split(",")
+DB_PATH           = os.environ.get("DB_PATH", "/data/orvannis.db")
+ADMIN_TOKEN       = os.environ.get("ADMIN_TOKEN", "")
+CLICKUP_API_KEY   = os.environ.get("CLICKUP_API_KEY", "")
+CLICKUP_LIST_ID   = os.environ.get("CLICKUP_LIST_ID", "")
 
-RESEND_SEND_URL = "https://api.resend.com/emails"
+RESEND_SEND_URL   = "https://api.resend.com/emails"
+CLICKUP_TASKS_URL = "https://api.clickup.com/api/v2/list/{list_id}/task"
 
 
 # ---------------------------------------------------------------------------
@@ -462,6 +463,52 @@ def log_email_attempt(
 
 
 # ---------------------------------------------------------------------------
+# ClickUp lead task creation
+# ---------------------------------------------------------------------------
+async def create_clickup_task(form: ContactForm, submitted_at: str):
+    if not CLICKUP_API_KEY or not CLICKUP_LIST_ID:
+        logger.warning("ClickUp not configured — skipping task creation")
+        return
+
+    from datetime import timedelta
+    due = datetime.now(timezone.utc) + timedelta(days=1)
+    due_ms = int(due.timestamp() * 1000)
+
+    details = "\n".join(filter(None, [
+        f"Email: {form.email}",
+        f"Phone: {form.phone}"          if form.phone    else None,
+        f"Company: {form.company}"      if form.company  else None,
+        f"Industry: {form.industry}"    if form.industry else None,
+        f"Lead source: {form.lead_source}" if form.lead_source else None,
+        f"Best time: {form.best_time}"  if form.best_time else None,
+        f"Prefers: {form.preferred_contact}",
+        f"\nMessage:\n{form.message}",
+        f"\nSubmitted: {submitted_at}",
+    ]))
+
+    payload = {
+        "name": f"Lead: {form.name}" + (f" — {form.company}" if form.company else ""),
+        "description": details,
+        "due_date": due_ms,
+        "due_date_time": True,
+        "priority": 2,  # high
+        "status": "to do",
+    }
+
+    url = CLICKUP_TASKS_URL.format(list_id=CLICKUP_LIST_ID)
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            url,
+            json=payload,
+            headers={"Authorization": CLICKUP_API_KEY, "Content-Type": "application/json"},
+        )
+        if resp.status_code in (200, 201):
+            logger.info("ClickUp task created for %s", form.name)
+        else:
+            logger.error("ClickUp task creation failed %s: %s", resp.status_code, resp.text)
+
+
+# ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 @app.get("/health")
@@ -552,6 +599,12 @@ async def contact(form: ContactForm):
         logger.info("All emails sent for submission #%d", submission_id)
     else:
         logger.warning("RESEND_API_KEY not configured — skipping email send")
+
+    # 3. Create ClickUp lead task
+    try:
+        await create_clickup_task(form, submitted_at)
+    except Exception as exc:
+        logger.error("ClickUp task creation error for #%d: %s", submission_id, exc)
 
     return {
         "success": True,
