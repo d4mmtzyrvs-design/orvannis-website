@@ -877,11 +877,33 @@ html:not([data-theme="dark"]) .banner-img--for-dark  { display: none; }
 }
 /* Footer logo — full stationary SVG (620×180) at readable size */
 .footer-brand .nav-logo {
-  align-items: flex-start;
+  align-items: center;
 }
 .footer-logo-img {
-  height: 54px;   /* 620×180 at height 54px → width ≈ 186px; shows pillars legibly */
+  height: 54px;
   width: auto;
+  display: block;
+}
+/* Cream background behind the icon in light mode */
+html:not([data-theme="dark"]) .footer-icon-wrap {
+  background: var(--paper-pure);
+  border-radius: 10px;
+  padding: 6px 8px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+[data-theme="dark"] .footer-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+/* Footer wordmark — copper O always; full word copper in light mode */
+.footer-logo-o {
+  color: var(--copper);
+}
+html:not([data-theme="dark"]) .footer-logo-text {
+  color: var(--copper);
 }
 /* Show/hide based on theme — dark variant hides everywhere except when
    [data-theme="dark"] is actually active (previously hid itself unconditionally,
