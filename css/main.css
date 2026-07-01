@@ -886,12 +886,14 @@ html:not([data-theme="dark"]) .banner-img--for-dark  { display: none; }
 }
 /* Cream background behind the icon in light mode */
 html:not([data-theme="dark"]) .footer-icon-wrap {
-  background: var(--color-bg);
-  border-radius: 10px;
-  padding: 6px 8px;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
+}
+/* Blend the white JPG background away into the page cream */
+html:not([data-theme="dark"]) .footer-icon-wrap .footer-logo-img {
+  mix-blend-mode: multiply;
+  border-radius: 6px;
 }
 [data-theme="dark"] .footer-icon-wrap {
   display: inline-flex;
