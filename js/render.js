@@ -37,7 +37,7 @@
     r.style.setProperty('--color-primary', co.copper       || '#B87333');
     // Theme-dependent palette
     if (isDark) {
-      r.style.setProperty('--color-bg',         co.bgDark        || '#131210');
+      r.style.setProperty('--color-bg',         co.bgDark        || '#000000');
       r.style.setProperty('--color-surface',    co.surfaceDark   || '#1A1815');
       r.style.setProperty('--color-text',       co.textDark      || '#E5DFD4');
       r.style.setProperty('--color-text-muted', co.textMutedDark || '#8A8070');
