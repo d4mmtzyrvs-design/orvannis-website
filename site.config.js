@@ -44,7 +44,7 @@ window.ORVANNIS = {
     headingLight:  '#415A6B',
     textMutedLight:'#6B6560',
 
-    bgDark:        '#131210',
+    bgDark:        '#000000',
     surfaceDark:   '#1A1815',
     textDark:      '#E5DFD4',
     textMutedDark: '#8A8070',
