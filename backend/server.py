@@ -19,6 +19,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 
+from crm_integration import (
+    create_lead_from_form_submission,
+    create_lead_from_voicemail,
+    get_pipeline_summary_for_email,
+)
+
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
@@ -601,10 +607,30 @@ async def contact(form: ContactForm):
         logger.warning("RESEND_API_KEY not configured — skipping email send")
 
     # 3. Create ClickUp lead task
+    # NOTE: ClickUp is being retired in favour of HubSpot. Kept active until
+    # HubSpot is confirmed working end-to-end, then this block will be removed.
     try:
         await create_clickup_task(form, submitted_at)
     except Exception as exc:
         logger.error("ClickUp task creation error for #%d: %s", submission_id, exc)
+
+    # 4. Push to HubSpot CRM (upsert contact + create deal + log note).
+    # Fails silently — a HubSpot error never returns a non-200 to the user.
+    try:
+        crm_result = await create_lead_from_form_submission({
+            "name": form.name,
+            "email": form.email,
+            "phone": form.phone,
+            "company": form.company,
+            "message": form.message,
+            "industry": form.industry,
+            "lead_source": form.lead_source or "Website",
+            "preferred_contact": form.preferred_contact,
+            "best_time": form.best_time,
+        })
+        logger.info("CRM result for %s: %s", form.email, crm_result)
+    except Exception as crm_exc:
+        logger.error("CRM push failed (non-fatal) for #%d: %s", submission_id, crm_exc)
 
     return {
         "success": True,
@@ -746,3 +772,34 @@ async def admin_report(
         conn.close()
 
     return report
+
+
+@app.get("/admin/crm-pipeline")
+async def get_crm_pipeline(_: bool = Depends(require_admin)):
+    """
+    Returns a live snapshot of the HubSpot sales pipeline.
+    Protected by the same ADMIN_TOKEN as other admin endpoints.
+    """
+    if not os.getenv("HUBSPOT_PRIVATE_APP_TOKEN"):
+        return {
+            "error": "HubSpot not configured",
+            "hint": "Add HUBSPOT_PRIVATE_APP_TOKEN to Railway environment variables",
+        }
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.post(
+                "https://api.hubapi.com/crm/v3/objects/deals/search",
+                headers={
+                    "Authorization": f"Bearer {os.getenv('HUBSPOT_PRIVATE_APP_TOKEN')}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "filterGroups": [],
+                    "properties": ["dealname", "dealstage", "amount", "createdate", "closedate"],
+                    "limit": 50,
+                },
+            )
+        return r.json()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"HubSpot API error: {str(e)}")
